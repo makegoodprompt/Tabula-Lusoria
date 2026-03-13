@@ -282,22 +282,32 @@ class DOMView {
     renderRoster(roster, selections) {
         this.elements.rosterGrid.innerHTML = '';
         roster.forEach(char => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'roster-char-wrapper';
+
+            if (selections[GameConfig.PLAYERS.ONE] === char.id) {
+                wrapper.classList.add('p1-selected');
+            } else if (selections[GameConfig.PLAYERS.TWO] === char.id) {
+                wrapper.classList.add('p2-selected');
+            }
+
+            if (Object.values(selections).includes(char.id)) {
+                wrapper.classList.add('disabled');
+            }
+
             const img = document.createElement('img');
             img.src = char.img;
             img.className = 'roster-char';
             
-            if (selections[GameConfig.PLAYERS.ONE] === char.id) {
-                img.classList.add('p1-selected');
-            } else if (selections[GameConfig.PLAYERS.TWO] === char.id) {
-                img.classList.add('p2-selected');
-            }
+            const nameLabel = document.createElement('span');
+            nameLabel.className = 'roster-char-name';
+            nameLabel.innerText = char.name;
 
-            if (Object.values(selections).includes(char.id)) {
-                img.classList.add('disabled');
-            }
+            wrapper.appendChild(img);
+            wrapper.appendChild(nameLabel);
 
-            img.addEventListener('click', () => this.eventEmitter.emit('characterSelected', char.id));
-            this.elements.rosterGrid.appendChild(img);
+            wrapper.addEventListener('click', () => this.eventEmitter.emit('characterSelected', char.id));
+            this.elements.rosterGrid.appendChild(wrapper);
         });
     }
 
@@ -353,12 +363,6 @@ class DOMView {
     setActivePlayerPanel(playerId, gameActive) {
         this.elements.panel1.classList.toggle('active', gameActive && playerId === GameConfig.PLAYERS.ONE);
         this.elements.panel2.classList.toggle('active', gameActive && playerId === GameConfig.PLAYERS.TWO);
-    }
-
-    togglePools(phase) {
-        const isPlacement = phase === GameConfig.PHASES.PLACEMENT;
-        this.elements.pool1.classList.toggle('hidden', !isPlacement);
-        this.elements.pool2.classList.toggle('hidden', !isPlacement);
     }
 
     clearBoardHighlights() {
@@ -503,11 +507,9 @@ class GameController {
             
             this.menuState.selections[this.menuState.selectingFor] = charId;
             
-            if (this.menuState.selectingFor === GameConfig.PLAYERS.ONE && !this.menuState.selections[GameConfig.PLAYERS.TWO]) {
-                this.menuState.selectingFor = GameConfig.PLAYERS.TWO;
-            } else if (this.menuState.selectingFor === GameConfig.PLAYERS.TWO && !this.menuState.selections[GameConfig.PLAYERS.ONE]) {
-                this.menuState.selectingFor = GameConfig.PLAYERS.ONE;
-            }
+            this.menuState.selectingFor = this.menuState.selectingFor === GameConfig.PLAYERS.ONE 
+                ? GameConfig.PLAYERS.TWO 
+                : GameConfig.PLAYERS.ONE;
             
             this.view.renderRoster(GameConfig.ROSTER, this.menuState.selections);
             this.view.updateMenuUI(this.menuState);
@@ -664,7 +666,6 @@ class GameController {
 
     _updateGameStateUI() {
         this.view.setActivePlayerPanel(this.currentPlayer, this.gameActive);
-        this.view.togglePools(this.phase);
         this.view.clearBoardHighlights();
 
         if (this.gameActive) {
