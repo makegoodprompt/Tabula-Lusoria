@@ -2,11 +2,18 @@
 
 const GameConfig = Object.freeze({
     POSITIONS: { 
-        0:{x:50, y:50}, 1:{x:50, y:14}, 2:{x:75.5, y:24.5}, 3:{x:86, y:50}, 
-        4:{x:75.5, y:75.5}, 5:{x:50, y:86}, 6:{x:24.5, y:75.5}, 7:{x:14, y:50}, 8:{x:24.5, y:24.5} 
+        0:{x:50, y:50}, 1:{x:50, y:10.5}, 2:{x:77.9, y:22.1}, 3:{x:89.5, y:50}, 
+        4:{x:77.9, y:77.9}, 5:{x:50, y:89.5}, 6:{x:22.1, y:77.9}, 7:{x:10.5, y:50}, 8:{x:22.1, y:22.1} 
     },
-    ADJACENCY: { 0:[1,2,3,4,5,6,7,8], 1:[0,8,2], 2:[0,1,3], 3:[0,2,4], 4:[0,3,5], 5:[0,4,6], 6:[0,5,7], 7:[0,6,8], 8:[0,7,1] },
-    WINNING_COMBINATIONS: [ [1,0,5], [2,0,6], [3,0,7], [4,0,8], [1,2,3], [2,3,4], [3,4,5], [4,5,6], [5,6,7], [6,7,8], [7,8,1], [8,1,2] ],
+    ADJACENCY: { 
+        0:[1,2,3,4,5,6,7,8], 1:[0,8,2], 2:[0,1,3], 3:[0,2,4], 
+        4:[0,3,5], 5:[0,4,6], 6:[0,5,7], 7:[0,6,8], 8:[0,7,1] 
+    },
+    WINNING_COMBINATIONS: [ 
+        [1,0,5], [2,0,6], [3,0,7], [4,0,8], 
+        [1,2,3], [2,3,4], [3,4,5], [4,5,6], 
+        [5,6,7], [6,7,8], [7,8,1], [8,1,2] 
+    ],
     PLAYER_TYPES: { HUMAN: 'human', AI: 'ai' },
     PHASES: { PLACEMENT: 'placement', MOVEMENT: 'movement' },
     PLAYERS: { ONE: 1, TWO: 2 },
@@ -24,30 +31,143 @@ const GameConfig = Object.freeze({
 });
 
 class GameBoard {
-    constructor(state = Array(9).fill(null)) { this.state = [...state]; }
-    getEmptyNodes() { return this.state.map((p, i) => p === null ? i : null).filter(i => i !== null); }
-    getPlayerNodes(id) { return this.state.map((p, i) => p === id ? i : null).filter(i => i !== null); }
-    placePiece(i, id) { this.state[i] = id; }
-    movePiece(f, t, id) { this.state[f] = null; this.state[t] = id; }
-    isWinner(id) { return GameConfig.WINNING_COMBINATIONS.some(c => c.every(i => this.state[i] === id)); }
-    getWinningCombination(id) { return GameConfig.WINNING_COMBINATIONS.find(c => c.every(i => this.state[i] === id)) || null; }
-    clone() { return new GameBoard(this.state); }
+    constructor(state = Array(9).fill(null)) {
+        this.state = [...state];
+    }
+
+    getEmptyNodes() {
+        return this.state.map((p, i) => p === null ? i : null).filter(i => i !== null);
+    }
+
+    getPlayerNodes(id) {
+        return this.state.map((p, i) => p === id ? i : null).filter(i => i !== null);
+    }
+
+    placePiece(i, id) {
+        if (this.state[i] !== null) throw new Error('Node is occupied.');
+        this.state[i] = id;
+    }
+
+    movePiece(f, t, id) {
+        if (this.state[f] !== id || this.state[t] !== null) throw new Error('Invalid move.');
+        this.state[f] = null;
+        this.state[t] = id;
+    }
+
+    isWinner(id) {
+        return GameConfig.WINNING_COMBINATIONS.some(c => c.every(i => this.state[i] === id));
+    }
+
+    getWinningCombination(id) {
+        return GameConfig.WINNING_COMBINATIONS.find(c => c.every(i => this.state[i] === id)) || null;
+    }
+
+    clone() {
+        return new GameBoard(this.state);
+    }
 }
 
 class AIStrategy {
-    static calculateBestPlacement(board, aiId, oId) {
-        const empty = board.getEmptyNodes();
-        for (const n of empty) { const t = board.clone(); t.placePiece(n, aiId); if (t.isWinner(aiId)) return n; }
-        for (const n of empty) { const t = board.clone(); t.placePiece(n, oId); if (t.isWinner(oId)) return n; }
-        return empty[Math.floor(Math.random() * empty.length)];
+    static calculateBestPlacement(board, aiId, opponentId) {
+        const emptyNodes = board.getEmptyNodes();
+
+        for (const node of emptyNodes) {
+            const t = board.clone();
+            t.placePiece(node, aiId);
+            if (t.isWinner(aiId)) return node;
+        }
+
+        for (const node of emptyNodes) {
+            const t = board.clone();
+            t.placePiece(node, opponentId);
+            if (t.isWinner(opponentId)) return node;
+        }
+
+        if (emptyNodes.includes(0)) return 0;
+
+        for (const node of emptyNodes) {
+            const t = board.clone();
+            t.placePiece(node, opponentId);
+            let winThreats = 0;
+            const remaining = t.getEmptyNodes();
+            for (const nextNode of remaining) {
+                const t2 = t.clone();
+                t2.placePiece(nextNode, opponentId);
+                if (t2.isWinner(opponentId)) winThreats++;
+            }
+            if (winThreats >= 2) return node;
+        }
+
+        for (const node of emptyNodes) {
+            const t = board.clone();
+            t.placePiece(node, aiId);
+            let winThreats = 0;
+            const remaining = t.getEmptyNodes();
+            for (const nextNode of remaining) {
+                const t2 = t.clone();
+                t2.placePiece(nextNode, aiId);
+                if (t2.isWinner(aiId)) winThreats++;
+            }
+            if (winThreats >= 2) return node;
+        }
+
+        return emptyNodes[Math.floor(Math.random() * emptyNodes.length)];
     }
-    static calculateBestMovement(board, aiId, oId) {
+
+    static calculateBestMovement(board, aiId, opponentId) {
         const aiNodes = board.getPlayerNodes(aiId);
-        const moves = [];
-        aiNodes.forEach(n => GameConfig.ADJACENCY[n].forEach(a => { if (board.state[a] === null) moves.push({f:n, t:a}); }));
-        if (moves.length === 0) return null;
-        for (const m of moves) { const t = board.clone(); t.movePiece(m.f, m.t, aiId); if (t.isWinner(aiId)) return m; }
-        return moves[Math.floor(Math.random() * moves.length)];
+        const validMoves = [];
+
+        aiNodes.forEach(node => {
+            GameConfig.ADJACENCY[node].forEach(adjNode => {
+                if (board.state[adjNode] === null) {
+                    validMoves.push({ from: node, to: adjNode });
+                }
+            });
+        });
+
+        if (validMoves.length === 0) return null;
+
+        for (const move of validMoves) {
+            const t = board.clone();
+            t.movePiece(move.from, move.to, aiId);
+            if (t.isWinner(aiId)) return move;
+        }
+
+        const safeMoves = [];
+
+        for (const aiMove of validMoves) {
+            const t = board.clone();
+            t.movePiece(aiMove.from, aiMove.to, aiId);
+            let givesOpponentWin = false;
+
+            const opponentNodes = t.getPlayerNodes(opponentId);
+            for (const oNode of opponentNodes) {
+                for (const adj of GameConfig.ADJACENCY[oNode]) {
+                    if (t.state[adj] === null) {
+                        const t2 = t.clone();
+                        t2.movePiece(oNode, adj, opponentId);
+                        if (t2.isWinner(opponentId)) {
+                            givesOpponentWin = true;
+                        }
+                    }
+                    if (givesOpponentWin) break;
+                }
+                if (givesOpponentWin) break;
+            }
+
+            if (!givesOpponentWin) safeMoves.push(aiMove);
+        }
+
+        if (safeMoves.length === 0) {
+            return validMoves[Math.floor(Math.random() * validMoves.length)];
+        }
+
+        for (const move of safeMoves) {
+            if (move.to === 0) return move;
+        }
+
+        return safeMoves[Math.floor(Math.random() * safeMoves.length)];
     }
 }
 
@@ -99,7 +219,12 @@ class DOMView {
         this.elements.startBtn.onclick = onStart;
         document.getElementById('btn-restart').onclick = onRestart;
         document.getElementById('btn-menu').onclick = onMenu;
-        document.querySelectorAll('.toggle-btn').forEach(b => b.onclick = (e) => this.ee.emit('playerTypeChanged', {p: parseInt(e.target.dataset.player), t: e.target.dataset.type}));
+        document.querySelectorAll('.toggle-btn').forEach(b => {
+            b.onclick = (e) => this.ee.emit('playerTypeChanged', {
+                p: parseInt(e.target.dataset.player), 
+                t: e.target.dataset.type
+            });
+        });
     }
 
     renderRoster(roster, sel) {
@@ -127,8 +252,6 @@ class DOMView {
         this.elements.p2MenuPortrait.src = p2 ? p2.img : 'img/characters/unknown.jpg';
         this.elements.p1MenuName.innerText = p1 ? p1.name : 'Select P1';
         this.elements.p2MenuName.innerText = p2 ? p2.name : 'Select P2';
-        
-        this.elements.startBtn.disabled = !p1 || !p2;
     }
 
     showGame(state) {
@@ -137,6 +260,7 @@ class DOMView {
 
         const p1 = GameConfig.ROSTER.find(c => c.id === state.sel[1]);
         const p2 = GameConfig.ROSTER.find(c => c.id === state.sel[2]);
+
         this.elements.p1Avatar.src = p1.img;
         this.elements.p2Avatar.src = p2.img;
         this.elements.p1Name.innerText = p1.name;
@@ -155,7 +279,9 @@ class DOMView {
         this.elements.p2Score.innerText = scores[2];
     }
 
-    setStatus(text) { this.elements.statusEl.innerText = text; }
+    setStatus(text) { 
+        this.elements.statusEl.innerText = text; 
+    }
     
     setActivePlayerPanel(cur, active) {
         this.elements.panel1.classList.toggle('active', active && cur === 1);
@@ -168,13 +294,18 @@ class DOMView {
     }
 
     clearHighlights() {
-        this.pieceElements.forEach(p => { p.el.classList.remove('can-move', 'selected'); p.el.onclick = null; });
+        this.pieceElements.forEach(p => { 
+            p.el.classList.remove('can-move', 'selected'); 
+            p.el.onclick = null; 
+        });
         this.nodeElements.forEach(n => n.classList.remove('can-move-to', 'can-place'));
     }
 
     highlightPlacement(boardState, isHuman) {
         if (!isHuman) return;
-        boardState.forEach((p, i) => { if (p === null) this.nodeElements[i].classList.add('can-place'); });
+        boardState.forEach((p, i) => { 
+            if (p === null) this.nodeElements[i].classList.add('can-place'); 
+        });
     }
 
     highlightMovable(boardState, cur, isHuman) {
@@ -187,10 +318,16 @@ class DOMView {
     }
 
     highlightTarget(nodeId, boardState) {
-        GameConfig.ADJACENCY[nodeId].forEach(a => { if (boardState[a] === null) this.nodeElements[a].classList.add('can-move-to'); });
+        GameConfig.ADJACENCY[nodeId].forEach(a => { 
+            if (boardState[a] === null) this.nodeElements[a].classList.add('can-move-to'); 
+        });
     }
 
-    highlightSelected(id) { if (this.pieceElements.has(id)) this.pieceElements.get(id).el.classList.add('selected'); }
+    highlightSelected(id) { 
+        if (this.pieceElements.has(id)) {
+            this.pieceElements.get(id).el.classList.add('selected'); 
+        }
+    }
 
     renderPiece(i, id) {
         const p = document.createElement('div');
@@ -214,10 +351,28 @@ class DOMView {
     }
 
     highlightWin(combo, id) {
-        combo.forEach(n => { if (this.pieceElements.has(n) && this.pieceElements.get(n).id === id) this.pieceElements.get(n).el.classList.add('winner'); });
+        combo.forEach(n => { 
+            if (this.pieceElements.has(n) && this.pieceElements.get(n).id === id) {
+                this.pieceElements.get(n).el.classList.add('winner'); 
+            }
+        });
     }
 
-    clear() { this.pieceElements.forEach(p => p.el.remove()); this.pieceElements.clear(); document.querySelectorAll('.pool-piece').forEach(p => p.classList.remove('placed')); }
+    clear() { 
+        this.pieceElements.forEach(p => p.el.remove()); 
+        this.pieceElements.clear(); 
+        document.querySelectorAll('.pool-piece').forEach(p => p.classList.remove('placed')); 
+    }
+
+    animateRestartButton() {
+        this.elements.btnRestart.innerText = "Next Battle";
+        this.elements.btnRestart.style.transform = "scale(1.1)";
+        setTimeout(() => this.elements.btnRestart.style.transform = "scale(1)", 200);
+    }
+
+    resetRestartButton() {
+        this.elements.btnRestart.innerText = "Restart Round";
+    }
 }
 
 class EventEmitter {
@@ -228,12 +383,17 @@ class EventEmitter {
 
 class GameController {
     constructor(v, ee) {
-        this.v = v; this.ee = ee;
+        this.v = v; 
+        this.ee = ee;
+        
+        const shuffled = [...GameConfig.ROSTER].sort(() => 0.5 - Math.random());
+        
         this.state = {
             types: {1: 'human', 2: 'ai'},
-            sel: {1: null, 2: null},
+            sel: {1: shuffled[0].id, 2: shuffled[1].id},
             selecting: 1
         };
+        
         this.board = new GameBoard();
         this.scores = {1:0, 2:0};
         this.active = false;
@@ -247,19 +407,20 @@ class GameController {
         this.ee.on('charSelected', (id) => {
             if (this.state.sel[1] === id || this.state.sel[2] === id) return;
             this.state.sel[this.state.selecting] = id;
-            this.state.selecting = this.state.selecting === 1 ? 2 : 1;
             this.v.renderRoster(GameConfig.ROSTER, this.state.sel);
             this.v.updateMenu(this.state);
         });
 
         this.ee.on('focusSelector', (id) => {
             this.state.selecting = id;
-            this.state.sel[id] = null;
-            this.v.renderRoster(GameConfig.ROSTER, this.state.sel);
             this.v.updateMenu(this.state);
         });
 
-        this.ee.on('playerTypeChanged', (d) => { this.state.types[d.p] = d.t; this.v.updateMenu(this.state); });
+        this.ee.on('playerTypeChanged', (d) => { 
+            this.state.types[d.p] = d.t; 
+            this.v.updateMenu(this.state); 
+        });
+
         this.ee.on('nodeClicked', (i) => this._handleMove(i, false));
         this.v.bindMenu(() => this._start(), () => this._reset(), () => this._toMenu());
     }
@@ -276,7 +437,10 @@ class GameController {
         this._reset(); 
     }
 
-    _toMenu() { this.active = false; this.v.showMenuScreen(); }
+    _toMenu() { 
+        this.active = false; 
+        this.v.showMenuScreen(); 
+    }
 
     _reset() { 
         this.board = new GameBoard(); 
@@ -285,7 +449,7 @@ class GameController {
         this.phase = 'placement';
         this.selected = null;
         this.v.clear(); 
-        document.getElementById('btn-restart').innerText = "Restart Round";
+        this.v.resetRestartButton();
         this._update(); 
         this._checkAi();
     }
@@ -297,7 +461,11 @@ class GameController {
             if (this.board.state[i] !== null) return;
             this.board.placePiece(i, this.cur);
             this.v.renderPiece(i, this.cur);
-            if (this.board.isWinner(this.cur)) { this._win(); return; }
+            
+            if (this.board.isWinner(this.cur)) { 
+                this._win(); 
+                return; 
+            }
             
             if (this.board.getPlayerNodes(1).length === 3 && this.board.getPlayerNodes(2).length === 3) {
                 this.phase = 'movement';
@@ -312,7 +480,12 @@ class GameController {
             } else if (this.board.state[i] === null && this.selected !== null && GameConfig.ADJACENCY[this.selected].includes(i)) {
                 this.board.movePiece(this.selected, i, this.cur);
                 this.v.movePiece(this.selected, i);
-                if (this.board.isWinner(this.cur)) { this._win(); return; }
+                
+                if (this.board.isWinner(this.cur)) { 
+                    this._win(); 
+                    return; 
+                }
+                
                 this.selected = null;
                 this._step();
             } else if (this.selected !== null && this.state.types[this.cur] === 'human') {
@@ -339,7 +512,9 @@ class GameController {
                     const m = AIStrategy.calculateBestMovement(this.board, this.cur, oId);
                     if (m) {
                         this._handleMove(m.f, true);
-                        setTimeout(() => { if (this.active) this._handleMove(m.t, true); }, 600);
+                        setTimeout(() => { 
+                            if (this.active) this._handleMove(m.t, true); 
+                        }, 600);
                     }
                 }
             }, 800);
@@ -368,14 +543,21 @@ class GameController {
         const isHum = !isAi;
 
         let txt = this.phase === 'placement' ? `Placement: ${char}'s Turn` : `Movement: ${char}'s Turn`;
-        if (isAi) txt = this.phase === 'placement' ? `${char} is thinking...` : (this.selected !== null ? `${char} is moving...` : `${char} is analyzing...`);
-        else if (this.phase === 'movement' && this.selected !== null) txt = "Select destination";
+        if (isAi) {
+            txt = this.phase === 'placement' ? `${char} is thinking...` : (this.selected !== null ? `${char} is moving...` : `${char} is analyzing...`);
+        } else if (this.phase === 'movement' && this.selected !== null) {
+            txt = "Select destination";
+        }
         
         this.v.setStatus(txt);
 
-        if (this.phase === 'placement') this.v.highlightPlacement(this.board.state, isHum);
-        else if (this.selected === null) this.v.highlightMovable(this.board.state, this.cur, isHum);
-        else this.v.highlightTarget(this.selected, this.board.state);
+        if (this.phase === 'placement') {
+            this.v.highlightPlacement(this.board.state, isHum);
+        } else if (this.selected === null) {
+            this.v.highlightMovable(this.board.state, this.cur, isHum);
+        } else {
+            this.v.highlightTarget(this.selected, this.board.state);
+        }
     }
 }
 
