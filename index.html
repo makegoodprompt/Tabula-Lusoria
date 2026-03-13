@@ -1,293 +1,37 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tabula Lusoria - Imperium Rzymskie</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&display=swap');
-
-        * { box-sizing: border-box; }
-
-        body {
-            /* Pompejańska czerwień i efekt starego fresku */
-            background-color: #5c1a15;
-            background-image: 
-                radial-gradient(circle at 50% 50%, #7b241c 0%, #2e0c0a 100%),
-                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px);
-            color: #f4ece1;
-            font-family: 'Cinzel', serif, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            overflow-x: hidden;
-        }
-
-        h1 {
-            font-size: 3.5rem;
-            font-weight: 900;
-            text-shadow: 2px 4px 8px rgba(0,0,0,0.9), 0 0 20px rgba(212, 175, 55, 0.4);
-            letter-spacing: 5px;
-            color: #d4af37; /* Rzymskie Złoto */
-            text-align: center;
-            margin-top: 10px;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-        }
-
-        p.subtitle { 
-            margin-top: 0; 
-            margin-bottom: 30px; 
-            font-size: 1.2rem; 
-            color: #e6dfd3; 
-            text-align: center; 
-            letter-spacing: 3px; 
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-        }
-
-        /* --- EKRAN MENU GŁÓWNEGO --- */
-        #menu-screen {
-            display: flex; flex-direction: column; align-items: center;
-            /* Marmur Trawertynowy */
-            background: linear-gradient(135deg, #f4ece1, #d6caba);
-            padding: 40px 60px; 
-            border-radius: 4px; 
-            border: 8px solid #3d2e1f;
-            box-shadow: 0 0 0 4px #d4af37, 0 30px 60px rgba(0,0,0,0.9);
-            color: #2a1f18; 
-            position: relative; 
-            min-width: 450px;
-        }
-
-        #menu-screen::before, #menu-screen::after { 
-            content: ''; position: absolute; width: 40px; height: 40px; border: 3px solid #d4af37; 
-        }
-        #menu-screen::before { top: 15px; left: 15px; border-right: none; border-bottom: none; }
-        #menu-screen::after { bottom: 15px; right: 15px; border-left: none; border-top: none; }
-
-        .menu-section { margin-bottom: 30px; width: 100%; text-align: center; }
-        .menu-section h2 { 
-            font-size: 1.5rem; margin-bottom: 15px; color: #3d2e1f; 
-            border-bottom: 2px solid #a39b8d; padding-bottom: 5px; text-transform: uppercase; 
-            font-weight: 900;
-        }
-
-        .toggle-group { display: flex; justify-content: center; gap: 15px; }
-
-        .toggle-btn {
-            background: #e8e5df; color: #3d2e1f; border: 2px solid #a39b8d;
-            padding: 12px 20px; font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: bold;
-            cursor: pointer; border-radius: 4px; transition: all 0.3s; min-width: 170px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-        .toggle-btn:hover { background: #fffcf5; transform: translateY(-2px); }
-        .toggle-btn.active {
-            background: #d4af37; color: #111; border-color: #f3c93f;
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.6), inset 0 0 10px rgba(255,255,255,0.5);
-        }
-
-        .start-btn {
-            font-size: 1.6rem; padding: 15px 45px; margin-top: 15px;
-            /* Czerwony Sztandar */
-            background: linear-gradient(to bottom, #a32222, #7b1616);
-            color: #f4ece1; border: 2px solid #d4af37; border-radius: 4px; cursor: pointer;
-            font-family: 'Cinzel', serif; font-weight: 900; text-transform: uppercase;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.7), inset 0 0 15px rgba(0,0,0,0.5); 
-            transition: transform 0.2s, box-shadow 0.2s;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-        }
-        .start-btn:hover { transform: scale(1.05); box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4); }
-
-        /* --- EKRAN GRY --- */
-        #game-screen { display: none; flex-direction: column; align-items: center; width: 100%; }
-        .game-layout { display: flex; align-items: center; justify-content: center; gap: 50px; width: 100%; max-width: 1300px; padding: 0 20px; }
-
-        .player-area { display: flex; flex-direction: column; align-items: center; gap: 20px; min-width: 240px; }
-        .player-panel {
-            display: flex; flex-direction: column; align-items: center; padding: 25px 30px;
-            width: 100%; border: 3px solid #8b7355;
-            transition: all 0.4s ease; opacity: 0.7; transform: scale(0.95); position: relative;
-            background: linear-gradient(135deg, #e6dfd3, #bbaea0); /* Piaskowiec */
-            box-shadow: 0 15px 30px rgba(0,0,0,0.8), inset 0 0 15px rgba(255,255,255,0.4);
-            color: #2a1f18; border-radius: 4px;
-        }
-        .player-panel.active { 
-            opacity: 1; transform: scale(1.05); border-color: #d4af37; 
-            box-shadow: 0 0 35px rgba(212, 175, 55, 0.4), inset 0 0 20px rgba(255,255,255,0.6); 
-        }
-
-        .player-role-label { position: absolute; top: 10px; font-size: 0.8rem; letter-spacing: 2px; font-weight: bold; opacity: 0.6; }
-        .player-name { font-size: 1.6rem; font-weight: 900; margin: 15px 0 5px 0; text-transform: uppercase; }
-        .score-box { font-size: 1.2rem; font-weight: bold; border-top: 1px solid #a39b8d; padding-top: 10px; margin-top: 5px; width: 100%; text-align: center;}
-        .score-number { font-size: 2rem; color: #a32222; text-shadow: 1px 1px 0px rgba(255,255,255,0.5); }
-
-        /* Awatary Kamienne */
-        .avatar { width: 90px; height: 90px; border-radius: 50%; margin-bottom: 5px; margin-top: 15px; border: 4px solid #d4af37; box-shadow: 0 6px 12px rgba(0,0,0,0.6), inset 0 0 20px rgba(0,0,0,0.8); }
-        .avatar.white-avatar { background: radial-gradient(circle, #f4ece1 30%, #b89947 90%); }
-        .avatar.black-avatar { background: radial-gradient(circle, #2c2c2c 30%, #5a1818 90%); }
-
-        .pieces-pool { 
-            display: flex; justify-content: center; gap: 12px; padding: 15px; 
-            background: rgba(0,0,0,0.4); border-radius: 4px; border: 2px solid #d4af37; 
-            min-height: 50px; transition: opacity 0.5s ease; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
-        }
-        .pieces-pool.hidden { opacity: 0; pointer-events: none; }
-        .pool-piece { width: 34px; height: 34px; border-radius: 50%; transition: opacity 0.3s ease, transform 0.3s ease; }
-        .pool-piece.placed { opacity: 0; transform: scale(0.1) translateY(20px); }
-        
-        .center-column { display: flex; flex-direction: column; align-items: center; }
-
-        /* Złota Plakietka Statusu */
-        #status { 
-            font-size: 1.3rem; margin-bottom: 25px; padding: 12px 25px; 
-            background: linear-gradient(to bottom, #f3c93f, #d4af37, #997a00);
-            color: #1a1510; border: 2px solid #5e4c3a; border-radius: 4px; 
-            box-shadow: 0 8px 20px rgba(0,0,0,0.8), inset 0 0 10px rgba(255,255,255,0.6); 
-            text-align: center; min-height: 32px; font-weight: 900; text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* --- PŁYTA MARMUROWA (Plansza) --- */
-        .board-container {
-            width: 480px; height: 480px; 
-            background: #e8e5df;
-            /* Wspaniały efekt marmuru: połączenie zakodowanego SVG z szumem i gradientów */
-            background-image: 
-                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.015' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.06'/%3E%3C/svg%3E"),
-                linear-gradient(to bottom right, transparent 40%, rgba(0,0,0,0.1) 43%, rgba(0,0,0,0.03) 47%, transparent 52%),
-                linear-gradient(to top right, transparent 30%, rgba(212, 175, 55, 0.08) 33%, transparent 40%),
-                radial-gradient(circle at 20% 80%, rgba(0,0,0,0.05) 0%, transparent 60%),
-                radial-gradient(circle at 80% 20%, rgba(255,255,255,0.9) 0%, transparent 60%);
-            border: 18px solid #3d2e1f;
-            box-shadow: 
-                0 30px 60px rgba(0,0,0,0.9), 
-                inset 0 0 40px rgba(0,0,0,0.5),
-                inset 0 0 5px rgba(255,255,255,0.9),
-                0 0 0 5px #d4af37; /* Złota rama */
-            position: relative; padding: 30px; border-radius: 4px;
-        }
-
-        #board { position: relative; width: 100%; height: 100%; }
-
-        /* Złote Inkrustacje linii */
-        .svg-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; filter: drop-shadow(1px 2px 3px rgba(0, 0, 0, 0.7)); }
-        .svg-lines line, .svg-lines circle { stroke: #d4af37; stroke-width: 3; fill: none; }
-
-        /* WIDOCZNE WYŻŁOBIENIA (Gniazda na pionki) */
-        .node { 
-            position: absolute; width: 50px; height: 50px; 
-            transform: translate(-50%, -50%); border-radius: 50%; 
-            cursor: pointer; z-index: 5; transition: all 0.3s ease; 
-            /* Styl wyżłobienia w kamieniu */
-            background: rgba(0, 0, 0, 0.08);
-            border: 2px solid rgba(212, 175, 55, 0.4);
-            box-shadow: inset 0 3px 8px rgba(0,0,0,0.4), 0 1px 2px rgba(255,255,255,0.6);
-        }
-        .node:hover { background: rgba(212, 175, 55, 0.3); border-color: rgba(212, 175, 55, 0.8); }
-        
-        /* Podświetlenie wolnych miejsc w FAZIE USTAWIANIA */
-        .node.can-place {
-            animation: pulse-place 2s infinite;
-            border-color: rgba(212, 175, 55, 0.8);
-            background: rgba(212, 175, 55, 0.15);
-        }
-        @keyframes pulse-place {
-            0% { box-shadow: inset 0 3px 6px rgba(0,0,0,0.3), 0 0 5px rgba(212, 175, 55, 0.5); }
-            50% { box-shadow: inset 0 3px 6px rgba(0,0,0,0.3), 0 0 15px 5px rgba(212, 175, 55, 0.9); }
-            100% { box-shadow: inset 0 3px 6px rgba(0,0,0,0.3), 0 0 5px rgba(212, 175, 55, 0.5); }
-        }
-
-        /* Podświetlenie miejsc, w które MOŻNA PRZESUNĄĆ pionek */
-        .node.can-move-to { 
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 0 25px 10px rgba(212, 175, 55, 0.9); 
-            border: 3px solid #fff; background: rgba(212, 175, 55, 0.4); 
-            animation: pulse-target 1.5s infinite; 
-        }
-        @keyframes pulse-target { 
-            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; } 
-            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } 
-            100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; } 
-        }
-
-        /* PIONKI (Kamienne kule) */
-        .piece, .pool-piece { 
-            position: absolute; width: 42px; height: 42px; border-radius: 50%; 
-            transform: translate(-50%, -50%); z-index: 10; pointer-events: none; 
-            transition: top 0.4s ease-in-out, left 0.4s ease-in-out, transform 0.2s, box-shadow 0.2s; 
-        }
-        .pool-piece { position: relative; transform: none; width: 34px; height: 34px;}
-        
-        /* Jasny Kamień */
-        .piece.player1, .pool-piece.white { 
-            background: radial-gradient(circle at 30% 30%, #ffffff, #e8e5df 40%, #a39b8d);
-            box-shadow: 3px 8px 15px rgba(0,0,0,0.7), inset -3px -3px 10px rgba(0,0,0,0.4), inset 3px 3px 10px rgba(255,255,255,1);
-        }
-        /* Ciemny Kamień */
-        .piece.player2, .pool-piece.black { 
-            background: radial-gradient(circle at 30% 30%, #555, #1a1a1a 50%, #000);
-            box-shadow: 3px 8px 15px rgba(0,0,0,0.8), inset -3px -3px 10px rgba(0,0,0,0.9), inset 3px 3px 8px rgba(255,255,255,0.4);
-        }
-        
-        .piece.selected { 
-            transform: translate(-50%, -50%) scale(1.15); 
-            box-shadow: 0 0 25px 10px rgba(212, 175, 55, 0.9), 3px 8px 15px rgba(0,0,0,0.7), inset -4px -4px 10px rgba(0,0,0,0.4), inset 4px 4px 10px rgba(255,255,255,1); 
-            z-index: 15;
-        }
-
-        /* Podświetlenie PIONKÓW, którymi można się ruszyć */
-        .piece.can-move { animation: pulse-piece 2s infinite ease-in-out; cursor: pointer; pointer-events: auto; }
-        @keyframes pulse-piece { 
-            0% { box-shadow: 0 0 10px 2px rgba(212, 175, 55, 0.5), 3px 8px 15px rgba(0,0,0,0.7); } 
-            50% { box-shadow: 0 0 20px 8px rgba(212, 175, 55, 0.9), 3px 8px 15px rgba(0,0,0,0.7); transform: translate(-50%, -50%) scale(1.05); } 
-            100% { box-shadow: 0 0 10px 2px rgba(212, 175, 55, 0.5), 3px 8px 15px rgba(0,0,0,0.7); } 
-        }
-
-        .piece.winner { animation: winner-pulse 1s infinite alternate ease-in-out; box-shadow: 0 0 35px 15px rgba(212, 175, 55, 1), 3px 8px 15px rgba(0,0,0,0.7); z-index: 20; border: 2px solid #fff;}
-        @keyframes winner-pulse { from { transform: translate(-50%, -50%) scale(1.1); } to { transform: translate(-50%, -50%) scale(1.3); } }
-
-        /* Przyciski Akcji */
-        .controls { display: flex; gap: 20px; margin-top: 40px; margin-bottom: 20px; }
-        button.action-btn { 
-            padding: 12px 25px; font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: bold;
-            background: #e8e5df; color: #3d2e1f; border: 2px solid #a39b8d; 
-            border-radius: 4px; cursor: pointer; transition: all 0.2s; box-shadow: 0 6px 12px rgba(0,0,0,0.6); 
-        }
-        button.action-btn:hover { background: #fffcf5; transform: translateY(-2px); }
-        button.action-btn.primary { background: #d4af37; color: #111; border-color: #fff; }
-        button.action-btn.primary:hover { background: #f3c93f; box-shadow: 0 8px 20px rgba(212, 175, 55, 0.5); }
-
-        @media (max-width: 1000px) {
-            .game-layout { flex-direction: column; gap: 30px; }
-            .player-area { width: 100%; max-width: 500px; }
-            .player-panel { flex-direction: row; justify-content: space-around; padding: 15px; }
-            .player-role-label { display: none; }
-            .score-box { border-top: none; border-left: 1px solid #a39b8d; padding-top: 0; padding-left: 15px; width: auto; margin-top: 0;}
-            .pieces-pool { width: 90%; justify-content: center; }
-            .avatar { width: 60px; height: 60px; margin: 0; }
-            .player-name { margin: 0; font-size: 1.3rem; }
-            .board-container { width: 360px; height: 360px; padding: 20px; border-width: 12px;}
-            #menu-screen { padding: 30px 20px; width: 90%; min-width: unset; }
-            .toggle-btn { min-width: 130px; font-size: 0.9rem;}
-        }
-    </style>
+    <title>Tabula Lusoria - Roman Empire</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <h1>Tabula Lusoria</h1>
-    <p class="subtitle">Starożytna Gra Legionów</p>
+    <p class="subtitle">Ancient Game of the Legions</p>
 
     <div id="menu-screen">
         <div class="menu-section">
-            <h2>Przeciwnik</h2>
+            <h2>Opponent</h2>
             <div class="toggle-group">
-                <button class="toggle-btn active" id="btn-pvp" onclick="setMode('pvp')">Drugi Gracz</button>
-                <button class="toggle-btn" id="btn-ai" onclick="setMode('ai')">Gra z AI</button>
+                <button class="toggle-btn active" id="btn-pvp" onclick="setMode('pvp')">Two Players</button>
+                <button class="toggle-btn" id="btn-ai" onclick="setMode('ai')">Play vs AI</button>
             </div>
         </div>
-        <button class="start-btn" onclick="startGame()">Wejdź na Arenę</button>
+
+        <div id="name-input-section">
+            <div class="name-input-group">
+                <label for="player1-name-input">First Player's Name</label>
+                <input type="text" id="player1-name-input" class="name-input" placeholder="Enter name..." maxlength="12" oninput="validateStart()">
+            </div>
+            <div class="name-input-group" id="player2-name-group">
+                <label for="player2-name-input">Second Player's Name</label>
+                <input type="text" id="player2-name-input" class="name-input" placeholder="Enter name..." maxlength="12" oninput="validateStart()">
+            </div>
+        </div>
+
+        <button class="start-btn" id="start-game-btn" onclick="startGame()" disabled>Enter the Arena</button>
     </div>
 
     <div id="game-screen">
@@ -295,10 +39,10 @@
             
             <div class="player-area">
                 <div class="player-panel active" id="panel-player1">
-                    <div class="player-role-label" id="role-label-1">Ty</div>
+                    <div class="player-role-label" id="role-label-1">You</div>
                     <div class="avatar white-avatar"></div>
-                    <div class="player-name">Biały</div>
-                    <div class="score-box">Wiktorie: <br><span class="score-number" id="score1">0</span></div>
+                    <div class="player-name" id="player1-name-display">White</div>
+                    <div class="score-box">Victories: <br><span class="score-number" id="score1">0</span></div>
                 </div>
                 <div class="pieces-pool" id="pool1">
                     <div class="pool-piece white"></div><div class="pool-piece white"></div><div class="pool-piece white"></div>
@@ -306,7 +50,7 @@
             </div>
 
             <div class="center-column">
-                <div id="status">Faza Ustawiania: Twój Ruch</div>
+                <div id="status">Placement Phase: Your Turn</div>
                 <div class="board-container">
                     <div id="board">
                         <svg class="svg-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -314,11 +58,11 @@
                             <line x1="50" y1="10" x2="50" y2="90" /><line x1="10" y1="50" x2="90" y2="50" />
                             <line x1="21.72" y1="21.72" x2="78.28" y2="78.28" /><line x1="21.72" y1="78.28" x2="78.28" y2="21.72" />
                         </svg>
-                    </div>
+                        </div>
                 </div>
                 <div class="controls">
-                    <button class="action-btn" onclick="goToMenu()">Wróć do Menu</button>
-                    <button class="action-btn primary" onclick="resetBoard()" id="resetBtn">Restart Rundy</button>
+                    <button class="action-btn" onclick="goToMenu()">Back to Menu</button>
+                    <button class="action-btn primary" onclick="resetBoard()" id="resetBtn">Restart Round</button>
                 </div>
             </div>
 
@@ -326,8 +70,8 @@
                 <div class="player-panel" id="panel-player2">
                     <div class="player-role-label" id="role-label-2">AI</div>
                     <div class="avatar black-avatar"></div>
-                    <div class="player-name">Czarny</div>
-                    <div class="score-box">Wiktorie: <br><span class="score-number" id="score2">0</span></div>
+                    <div class="player-name" id="player2-name-display">Black</div>
+                    <div class="score-box">Victories: <br><span class="score-number" id="score2">0</span></div>
                 </div>
                 <div class="pieces-pool" id="pool2">
                     <div class="pool-piece black"></div><div class="pool-piece black"></div><div class="pool-piece black"></div>
@@ -337,391 +81,6 @@
         </div>
     </div>
 
-    <script>
-        let gameMode = 'pvp'; 
-
-        function setMode(mode) {
-            gameMode = mode;
-            document.getElementById('btn-pvp').classList.remove('active');
-            document.getElementById('btn-ai').classList.remove('active');
-            document.getElementById(mode === 'pvp' ? 'btn-pvp' : 'btn-ai').classList.add('active');
-        }
-
-        function startGame() {
-            document.getElementById('menu-screen').style.display = 'none';
-            document.getElementById('game-screen').style.display = 'flex';
-            
-            document.getElementById('role-label-1').innerText = gameMode === 'pvp' ? "Pierwszy Gracz" : "Ty";
-            document.getElementById('role-label-2').innerText = gameMode === 'pvp' ? "Drugi Gracz" : "AI";
-
-            scores = {1: 0, 2: 0}; updateScores(); resetBoard();
-        }
-
-        function goToMenu() {
-            document.getElementById('menu-screen').style.display = 'flex';
-            document.getElementById('game-screen').style.display = 'none';
-        }
-
-        // LOGIKA GRY
-        const POSITIONS = { 0:{x:50,y:50}, 1:{x:50,y:10}, 2:{x:78.28,y:21.72}, 3:{x:90,y:50}, 4:{x:78.28,y:78.28}, 5:{x:50,y:90}, 6:{x:21.72,y:78.28}, 7:{x:10,y:50}, 8:{x:21.72,y:21.72} };
-        const ADJACENCY = { 0:[1,2,3,4,5,6,7,8], 1:[0,8,2], 2:[0,1,3], 3:[0,2,4], 4:[0,3,5], 5:[0,4,6], 6:[0,5,7], 7:[0,6,8], 8:[0,7,1] };
-        const WINNING_COMBINATIONS = [ [1,0,5], [2,0,6], [3,0,7], [4,0,8], [1,2,3], [2,3,4], [3,4,5], [4,5,6], [5,6,7], [6,7,8], [7,8,1], [8,1,2] ];
-
-        let phase = 'placement'; 
-        let currentPlayer = 1; 
-        let board = Array(9).fill(null);
-        let scores = {1: 0, 2: 0};
-        let selectedPieceNode = null;
-        let gameActive = true;
-        let pieceElements = []; 
-
-        const boardEl = document.getElementById('board');
-        const statusEl = document.getElementById('status');
-        const panel1 = document.getElementById('panel-player1');
-        const panel2 = document.getElementById('panel-player2');
-
-        function initBoard() {
-            for (let i = 0; i < 9; i++) {
-                let nodeEl = document.createElement('div');
-                nodeEl.className = 'node';
-                nodeEl.style.left = POSITIONS[i].x + '%';
-                nodeEl.style.top = POSITIONS[i].y + '%';
-                nodeEl.addEventListener('click', () => handleNodeClick(i, false));
-                boardEl.appendChild(nodeEl);
-            }
-        }
-
-        function getPlayerName(playerNum) {
-            if (gameMode === 'ai') return playerNum === 1 ? 'Twój' : 'AI';
-            return playerNum === 1 ? 'Pierwszego Gracza' : 'Drugiego Gracza';
-        }
-
-        function updateUI() {
-            if (gameActive) {
-                if (currentPlayer === 1) { panel1.classList.add('active'); panel2.classList.remove('active'); } 
-                else { panel1.classList.remove('active'); panel2.classList.add('active'); }
-            } else { panel1.classList.remove('active'); panel2.classList.remove('active'); }
-
-            if (phase === 'placement') { document.getElementById('pool1').classList.remove('hidden'); document.getElementById('pool2').classList.remove('hidden'); } 
-            else { document.getElementById('pool1').classList.add('hidden'); document.getElementById('pool2').classList.add('hidden'); }
-
-            clearBoardHighlights();
-
-            if (gameActive) {
-                if (phase === 'placement') {
-                    highlightPlacementNodes();
-                } else if (phase === 'movement') {
-                    if (selectedPieceNode === null) highlightMovablePieces();
-                    else highlightTargetNodes();
-                }
-            }
-        }
-
-        function clearBoardHighlights() {
-            pieceElements.forEach(p => p.el.classList.remove('can-move'));
-            document.querySelectorAll('.node').forEach(n => {
-                n.classList.remove('can-move-to');
-                n.classList.remove('can-place');
-            });
-        }
-
-        // Nowa funkcja: podświetla puste otwory w fazie ustawiania
-        function highlightPlacementNodes() {
-            if (currentPlayer === 1 || gameMode === 'pvp') {
-                const nodes = document.querySelectorAll('.node');
-                nodes.forEach((n, idx) => {
-                    if (board[idx] === null) {
-                        n.classList.add('can-place');
-                    }
-                });
-            }
-        }
-
-        function highlightMovablePieces() {
-            pieceElements.forEach(p => {
-                if (p.player === currentPlayer) {
-                    let canMove = ADJACENCY[p.node].some(nodeIdx => board[nodeIdx] === null);
-                    if (canMove && (currentPlayer === 1 || gameMode === 'pvp')) { 
-                        p.el.classList.add('can-move');
-                        p.el.onclick = () => handleNodeClick(p.node, false);
-                    } else { p.el.onclick = null; }
-                } else { p.el.classList.remove('can-move'); p.el.onclick = null; }
-            });
-        }
-
-        function highlightTargetNodes() {
-            ADJACENCY[selectedPieceNode].forEach(nodeIdx => {
-                if (board[nodeIdx] === null) {
-                    const nodeEl = boardEl.querySelector(`.node[style*="left: ${POSITIONS[nodeIdx].x}%"][style*="top: ${POSITIONS[nodeIdx].y}%"]`);
-                    if (nodeEl) nodeEl.classList.add('can-move-to');
-                }
-            });
-        }
-
-        function handleNodeClick(i, isAiMove) {
-            if (!gameActive) return;
-            if (gameMode === 'ai' && currentPlayer === 2 && !isAiMove) return;
-
-            if (phase === 'placement') {
-                if (board[i] !== null) return; 
-                
-                placePiece(i, currentPlayer);
-                if (checkWin(currentPlayer)) { endGame(currentPlayer); return; }
-                
-                const wCount = pieceElements.filter(p => p.player === 1).length;
-                const bCount = pieceElements.filter(p => p.player === 2).length;
-
-                if (wCount === 3 && bCount === 3) {
-                    phase = 'movement'; currentPlayer = 2; 
-                    statusEl.innerText = gameMode === 'ai' ? "Faza Ruchu: Zaczyna AI" : "Faza Ruchu: Wybiera Czarny";
-                    updateUI();
-                    if (gameMode === 'ai') setTimeout(makeAiMove, 800);
-                } else {
-                    switchTurn();
-                }
-
-            } else if (phase === 'movement') {
-                if (board[i] === currentPlayer) {
-                    selectedPieceNode = i; highlightSelectedPiece(i);
-                    statusEl.innerText = currentPlayer === 1 ? "Wskaż punkt docelowy" : "AI analizuje ruch...";
-                    updateUI();
-                } else if (board[i] === null && selectedPieceNode !== null) {
-                    if (ADJACENCY[selectedPieceNode].includes(i)) {
-                        movePiece(selectedPieceNode, i);
-                        if (checkWin(currentPlayer)) { endGame(currentPlayer); return; }
-                        
-                        selectedPieceNode = null; clearHighlightsOfSelection(); switchTurn();
-                    }
-                } else if (selectedPieceNode !== null && !isAiMove) {
-                    selectedPieceNode = null; clearHighlightsOfSelection();
-                    statusEl.innerText = currentPlayer === 1 ? "Wybierz swój pionek" : "Tura AI...";
-                    updateUI();
-                }
-            }
-        }
-
-        function switchTurn() { 
-            currentPlayer = currentPlayer === 1 ? 2 : 1; 
-            
-            let phaseText = phase === 'placement' ? "Ustawianie" : "Faza Ruchu";
-            if (gameMode === 'ai') {
-                statusEl.innerText = currentPlayer === 1 ? `${phaseText}: Twój ruch` : `${phaseText}: Tura AI...`;
-                updateUI();
-                if (currentPlayer === 2) setTimeout(makeAiMove, 800);
-            } else {
-                statusEl.innerText = `${phaseText}: Ruch - ${getPlayerName(currentPlayer)}`;
-                updateUI();
-            }
-        }
-
-        function placePiece(nodeIdx, player) {
-            board[nodeIdx] = player;
-            let pieceEl = document.createElement('div');
-            pieceEl.className = `piece player${player}`;
-            pieceEl.style.left = POSITIONS[nodeIdx].x + '%';
-            pieceEl.style.top = POSITIONS[nodeIdx].y + '%';
-            boardEl.appendChild(pieceEl);
-            pieceElements.push({ player: player, node: nodeIdx, el: pieceEl });
-            
-            const poolEl = player === 1 ? document.getElementById('pool1') : document.getElementById('pool2');
-            const pieceInPool = poolEl.querySelector('.pool-piece:not(.placed)');
-            if (pieceInPool) pieceInPool.classList.add('placed');
-        }
-
-        function movePiece(fromIdx, toIdx) {
-            board[fromIdx] = null; board[toIdx] = currentPlayer;
-            let pieceObj = pieceElements.find(p => p.node === fromIdx);
-            if (pieceObj) {
-                pieceObj.node = toIdx;
-                pieceObj.el.style.left = POSITIONS[toIdx].x + '%';
-                pieceObj.el.style.top = POSITIONS[toIdx].y + '%';
-            }
-        }
-
-        function highlightSelectedPiece(idx) {
-            clearHighlightsOfSelection();
-            let pieceObj = pieceElements.find(p => p.node === idx);
-            if (pieceObj) pieceObj.el.classList.add('selected');
-        }
-
-        function clearHighlightsOfSelection() { pieceElements.forEach(p => p.el.classList.remove('selected')); }
-
-        function checkWin(player) {
-            return WINNING_COMBINATIONS.some(combo => {
-                if (combo.every(index => board[index] === player)) return combo;
-            });
-        }
-
-        function endGame(winner) {
-            gameActive = false; scores[winner]++; updateScores(); updateUI();
-            
-            const winningCombo = WINNING_COMBINATIONS.find(combo => combo.every(index => board[index] === winner));
-            if (winningCombo) {
-                pieceElements.forEach(piece => {
-                    if (winningCombo.includes(piece.node) && piece.player === winner) piece.el.classList.add('winner');
-                });
-            }
-            
-            let winText = "";
-            if (gameMode === 'ai') {
-                winText = winner === 1 ? "🎉 CHWAŁA! ZWYCIĘŻASZ!" : "☠️ AI TRIUMFUJE!";
-            } else {
-                winText = winner === 1 ? "🎉 WIKTORIA: Pierwszy Gracz!" : "🎉 WIKTORIA: Drugi Gracz!";
-            }
-            statusEl.innerText = winText;
-            
-            const rBtn = document.getElementById('resetBtn');
-            rBtn.innerText = "Kolejna Batalia";
-            rBtn.style.transform = "scale(1.1)";
-            setTimeout(() => rBtn.style.transform = "scale(1)", 200);
-        }
-
-        function updateScores() { document.getElementById('score1').innerText = scores[1]; document.getElementById('score2').innerText = scores[2]; }
-
-        function resetBoard() {
-            board = Array(9).fill(null); phase = 'placement'; currentPlayer = 1; 
-            selectedPieceNode = null; gameActive = true;
-            pieceElements.forEach(p => p.el.remove()); pieceElements = []; clearBoardHighlights();
-            document.querySelectorAll('.pool-piece').forEach(p => p.classList.remove('placed'));
-            
-            statusEl.innerText = "Faza Ustawiania: Twój Ruch";
-            document.getElementById('resetBtn').innerText = "Restart Rundy";
-            updateUI();
-        }
-
-        // --- SZTUCZNA INTELIGENCJA ---
-
-        function countWinningThreats(player) {
-            let threats = 0;
-            for (let i = 0; i < 9; i++) {
-                if (board[i] === null) {
-                    board[i] = player;
-                    if (checkWin(player)) threats++;
-                    board[i] = null;
-                }
-            }
-            return threats;
-        }
-
-        function makeAiMove() {
-            if (!gameActive || currentPlayer !== 2) return;
-
-            if (phase === 'placement') {
-                let bestNode = getBestPlacementMove();
-                handleNodeClick(bestNode, true);
-            } else if (phase === 'movement') {
-                let bestMove = getBestMovementMove();
-                if (bestMove) {
-                    handleNodeClick(bestMove.from, true); 
-                    setTimeout(() => {
-                        if(gameActive) handleNodeClick(bestMove.to, true);
-                    }, 600);
-                }
-            }
-        }
-
-        function getBestPlacementMove() {
-            let emptyNodes = [];
-            for (let i = 0; i < 9; i++) if (board[i] === null) emptyNodes.push(i);
-
-            for (let node of emptyNodes) {
-                board[node] = 2; let wins = checkWin(2); board[node] = null;
-                if (wins) return node;
-            }
-
-            for (let node of emptyNodes) {
-                board[node] = 1; let wins = checkWin(1); board[node] = null;
-                if (wins) return node;
-            }
-
-            let bestNodes = [];
-            let minPlayerThreats = Infinity;
-
-            for (let aiMove of emptyNodes) {
-                board[aiMove] = 2; 
-                let maxThreatsForPlayer = 0;
-                
-                for (let playerMove = 0; playerMove < 9; playerMove++) {
-                    if (board[playerMove] === null) {
-                        board[playerMove] = 1; 
-                        let threats = countWinningThreats(1); 
-                        if (threats > maxThreatsForPlayer) maxThreatsForPlayer = threats;
-                        board[playerMove] = null;
-                    }
-                }
-                
-                board[aiMove] = null; 
-
-                if (maxThreatsForPlayer < minPlayerThreats) {
-                    minPlayerThreats = maxThreatsForPlayer;
-                    bestNodes = [aiMove];
-                } else if (maxThreatsForPlayer === minPlayerThreats) {
-                    bestNodes.push(aiMove);
-                }
-            }
-
-            if (bestNodes.includes(0)) return 0;
-            return bestNodes[Math.floor(Math.random() * bestNodes.length)];
-        }
-
-        function getBestMovementMove() {
-            let validAiMoves = [];
-            let aiNodes = [];
-            for(let i=0; i<9; i++) if(board[i] === 2) aiNodes.push(i);
-            
-            aiNodes.forEach(node => {
-                ADJACENCY[node].forEach(adjNode => {
-                    if (board[adjNode] === null) validAiMoves.push({ from: node, to: adjNode });
-                });
-            });
-
-            if (validAiMoves.length === 0) return null;
-
-            for (let move of validAiMoves) {
-                board[move.from] = null; board[move.to] = 2;
-                let wins = checkWin(2);
-                board[move.from] = 2; board[move.to] = null;
-                if (wins) return move;
-            }
-
-            let safeMoves = [];
-
-            for (let aiMove of validAiMoves) {
-                board[aiMove.from] = null; board[aiMove.to] = 2;
-                let givesHumanWin = false;
-
-                let humanNodes = [];
-                for(let i=0; i<9; i++) if(board[i] === 1) humanNodes.push(i);
-
-                for (let hNode of humanNodes) {
-                    for (let adj of ADJACENCY[hNode]) {
-                        if (board[adj] === null) {
-                            board[hNode] = null; board[adj] = 1;
-                            if (checkWin(1)) givesHumanWin = true; 
-                            board[hNode] = 1; board[adj] = null;
-                            if (givesHumanWin) break;
-                        }
-                    }
-                    if (givesHumanWin) break;
-                }
-
-                board[aiMove.from] = 2; board[aiMove.to] = null;
-                if (!givesHumanWin) safeMoves.push(aiMove);
-            }
-
-            if (safeMoves.length === 0) {
-                return validAiMoves[Math.floor(Math.random() * validAiMoves.length)];
-            }
-
-            for (let move of safeMoves) {
-                if (move.to === 0) return move;
-            }
-
-            return safeMoves[Math.floor(Math.random() * safeMoves.length)];
-        }
-
-        initBoard();
-
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
