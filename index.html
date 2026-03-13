@@ -448,7 +448,6 @@
 
         // --- ULEPSZONA SZTUCZNA INTELIGENCJA ---
 
-        // Zlicza, w ilu miejscach dany gracz wygrywa, kładąc swój pionek
         function countWinningThreats(player) {
             let threats = 0;
             for (let i = 0; i < 9; i++) {
@@ -482,46 +481,34 @@
             let emptyNodes = [];
             for (let i = 0; i < 9; i++) if (board[i] === null) emptyNodes.push(i);
 
-            // 1. Jeśli AI może wygrać od razu - gra i kończy zabawę
             for (let node of emptyNodes) {
-                board[node] = 2;
-                let wins = checkWin(2);
-                board[node] = null;
+                board[node] = 2; let wins = checkWin(2); board[node] = null;
                 if (wins) return node;
             }
 
-            // 2. Jeśli Ty byś wygrał w następnym ruchu - AI Cię bezwzględnie blokuje
             for (let node of emptyNodes) {
-                board[node] = 1;
-                let wins = checkWin(1);
-                board[node] = null;
+                board[node] = 1; let wins = checkWin(1); board[node] = null;
                 if (wins) return node;
             }
 
-            // 3. OBRONA PRZED WIDEŁKAMI (Minimax-Lite)
             let bestNodes = [];
             let minPlayerThreats = Infinity;
 
             for (let aiMove of emptyNodes) {
-                board[aiMove] = 2; // AI testuje ruch
-                
+                board[aiMove] = 2; 
                 let maxThreatsForPlayer = 0;
                 
-                // AI sprawdza wszystkie Twoje możliwe odpowiedzi
                 for (let playerMove = 0; playerMove < 9; playerMove++) {
                     if (board[playerMove] === null) {
                         board[playerMove] = 1; 
-                        let threats = countWinningThreats(1); // Ile otwierasz sobie dróg do zwycięstwa?
-                        if (threats > maxThreatsForPlayer) {
-                            maxThreatsForPlayer = threats;
-                        }
+                        let threats = countWinningThreats(1); 
+                        if (threats > maxThreatsForPlayer) maxThreatsForPlayer = threats;
                         board[playerMove] = null;
                     }
                 }
                 
-                board[aiMove] = null; // AI cofa testowany ruch
+                board[aiMove] = null; 
 
-                // AI chce zminimalizować Twoje szanse na stworzenie widełek
                 if (maxThreatsForPlayer < minPlayerThreats) {
                     minPlayerThreats = maxThreatsForPlayer;
                     bestNodes = [aiMove];
@@ -530,25 +517,25 @@
                 }
             }
 
-            // 4. Jeśli w optymalnych ruchach jest strategiczny środek, zajmij go
             if (bestNodes.includes(0)) return 0;
-
-            // Zwróć jedno z najbezpieczniejszych pól
             return bestNodes[Math.floor(Math.random() * bestNodes.length)];
         }
 
+        // NOWY, MĄDRZEJSZY ALGORYTM RUCHU
         function getBestMovementMove() {
             let validAiMoves = [];
-            let aiPieces = pieceElements.filter(p => p.player === 2);
+            let aiNodes = [];
+            for(let i=0; i<9; i++) if(board[i] === 2) aiNodes.push(i);
             
-            aiPieces.forEach(p => {
-                ADJACENCY[p.node].forEach(adjNode => {
-                    if (board[adjNode] === null) validAiMoves.push({ from: p.node, to: adjNode });
+            aiNodes.forEach(node => {
+                ADJACENCY[node].forEach(adjNode => {
+                    if (board[adjNode] === null) validAiMoves.push({ from: node, to: adjNode });
                 });
             });
 
             if (validAiMoves.length === 0) return null;
 
+            // 1. Sprawdź, czy AI może wygrać od razu w tym ruchu
             for (let move of validAiMoves) {
                 board[move.from] = null; board[move.to] = 2;
                 let wins = checkWin(2);
@@ -556,30 +543,64 @@
                 if (wins) return move;
             }
 
-            let playerPieces = pieceElements.filter(p => p.player === 1);
-            let dangerousTargets = [];
-            
-            playerPieces.forEach(p => {
-                ADJACENCY[p.node].forEach(adjNode => {
-                    if (board[adjNode] === null) {
-                        board[p.node] = null; board[adjNode] = 1;
-                        if(checkWin(1)) dangerousTargets.push(adjNode);
-                        board[p.node] = 1; board[adjNode] = null;
-                    }
-                });
-            });
+            // 2. Symuluj każdy swój ruch i sprawdź, czy nie wystawi się na przegraną (Minimax-Lite dla ruchu)
+            let safeMoves = [];
 
-            if (dangerousTargets.length > 0) {
-                for (let move of validAiMoves) {
-                    if (dangerousTargets.includes(move.to)) return move;
+            for (let aiMove of validAiMoves) {
+                // Wykonaj testowy ruch AI
+                board[aiMove.from] = null;
+                board[aiMove.to] = 2;
+
+                let givesHumanWin = false;
+
+                // Znajdź wszystkie pionki gracza (1) po ruchu AI
+                let humanNodes = [];
+                for(let i=0; i<9; i++) if(board[i] === 1) humanNodes.push(i);
+
+                // Sprawdź każdą możliwą odpowiedź gracza
+                for (let hNode of humanNodes) {
+                    for (let adj of ADJACENCY[hNode]) {
+                        if (board[adj] === null) {
+                            // Testowy ruch gracza
+                            board[hNode] = null;
+                            board[adj] = 1;
+                            
+                            if (checkWin(1)) {
+                                givesHumanWin = true; // Ten ruch AI pozwala graczowi wygrać w kolejnej turze!
+                            }
+                            
+                            // Cofnij testowy ruch gracza
+                            board[hNode] = 1;
+                            board[adj] = null;
+
+                            if (givesHumanWin) break;
+                        }
+                    }
+                    if (givesHumanWin) break;
+                }
+
+                // Cofnij testowy ruch AI
+                board[aiMove.from] = 2;
+                board[aiMove.to] = null;
+
+                // Jeśli po tym ruchu AI gracz nie ma ruchu wygrywającego, to ruch jest bezpieczny
+                if (!givesHumanWin) {
+                    safeMoves.push(aiMove);
                 }
             }
 
-            for (let move of validAiMoves) {
+            // Jeśli każdy ruch prowadzi do przegranej (AI w pułapce), wybierz cokolwiek
+            if (safeMoves.length === 0) {
+                return validAiMoves[Math.floor(Math.random() * validAiMoves.length)];
+            }
+
+            // 3. Spośród bezpiecznych ruchów, priorytetyzuj zajęcie (lub powrót na) środek
+            for (let move of safeMoves) {
                 if (move.to === 0) return move;
             }
 
-            return validAiMoves[Math.floor(Math.random() * validAiMoves.length)];
+            // Zwróć losowy, ale gwarantujący przetrwanie ruch
+            return safeMoves[Math.floor(Math.random() * safeMoves.length)];
         }
 
         initBoard();
