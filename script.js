@@ -11,7 +11,6 @@ function setMode(mode) {
     document.getElementById('btn-ai').classList.remove('active');
     document.getElementById(mode === 'pvp' ? 'btn-pvp' : 'btn-ai').classList.add('active');
     
-    // Show or hide the second player input field
     const p2Group = document.getElementById('player2-name-group');
     if (mode === 'ai') {
         p2Group.style.display = 'none';
@@ -24,13 +23,10 @@ function setMode(mode) {
 function validateStart() {
     let p1Valid = p1Input.value.trim().length > 0;
     let p2Valid = gameMode === 'ai' ? true : p2Input.value.trim().length > 0;
-    
-    // Enable button only if required inputs have text
     startBtn.disabled = !(p1Valid && p2Valid);
 }
 
 function startGame() {
-    // Save names, fall back to default if empty (though validateStart prevents this)
     playerNames[1] = p1Input.value.trim() || "First Player";
     if (gameMode === 'ai') {
         playerNames[2] = "AI";
@@ -38,7 +34,6 @@ function startGame() {
         playerNames[2] = p2Input.value.trim() || "Second Player";
     }
 
-    // Update game UI
     document.getElementById('player1-name-display').innerText = playerNames[1];
     document.getElementById('player2-name-display').innerText = playerNames[2];
 
@@ -54,7 +49,6 @@ function startGame() {
 }
 
 function goToMenu() {
-    // Return to menu, keep the typed names
     document.getElementById('menu-screen').style.display = 'flex';
     document.getElementById('game-screen').style.display = 'none';
     validateStart();
@@ -62,25 +56,30 @@ function goToMenu() {
 
 // --- GAME LOGIC ---
 const POSITIONS = { 
-    0:{x:50,y:50}, 1:{x:50,y:10}, 2:{x:78.28,y:21.72}, 
-    3:{x:90,y:50}, 4:{x:78.28,y:78.28}, 5:{x:50,y:90}, 
-    6:{x:21.72,y:78.28}, 7:{x:10,y:50}, 8:{x:21.72,y:21.72} 
+    0:{x:50, y:50}, 
+    1:{x:50, y:10.5},   // Top
+    2:{x:77.9, y:22.1}, // Top-Right
+    3:{x:89.5, y:50},   // Right
+    4:{x:77.9, y:77.9}, // Bottom-Right
+    5:{x:50, y:89.5},   // Bottom
+    6:{x:22.1, y:77.9}, // Bottom-Left
+    7:{x:10.5, y:50},   // Left
+    8:{x:22.1, y:22.1}  // Top-Left
 };
 
-// Which node connects to which
 const ADJACENCY = { 
     0:[1,2,3,4,5,6,7,8], 1:[0,8,2], 2:[0,1,3], 3:[0,2,4], 
     4:[0,3,5], 5:[0,4,6], 6:[0,5,7], 7:[0,6,8], 8:[0,7,1] 
 };
 
 const WINNING_COMBINATIONS = [ 
-    [1,0,5], [2,0,6], [3,0,7], [4,0,8], // Lines through center
-    [1,2,3], [2,3,4], [3,4,5], [4,5,6], // Curved edges
+    [1,0,5], [2,0,6], [3,0,7], [4,0,8], 
+    [1,2,3], [2,3,4], [3,4,5], [4,5,6], 
     [5,6,7], [6,7,8], [7,8,1], [8,1,2] 
 ];
 
 let phase = 'placement'; 
-let currentPlayer = 1; // 1 = White, 2 = Black
+let currentPlayer = 1; 
 let board = Array(9).fill(null);
 let scores = {1: 0, 2: 0};
 let selectedPieceNode = null;
@@ -108,7 +107,6 @@ function getStatusTextPrefix() {
 }
 
 function updateUI() {
-    // Highlight active player panel
     if (gameActive) {
         if (currentPlayer === 1) { 
             panel1.classList.add('active'); 
@@ -122,7 +120,6 @@ function updateUI() {
         panel2.classList.remove('active'); 
     }
 
-    // Show or hide marble pools
     if (phase === 'placement') { 
         document.getElementById('pool1').classList.remove('hidden'); 
         document.getElementById('pool2').classList.remove('hidden'); 
@@ -230,7 +227,6 @@ function handleNodeClick(i, isAiMove) {
 
 function switchTurn() { 
     currentPlayer = currentPlayer === 1 ? 2 : 1; 
-    
     statusEl.innerText = getStatusTextPrefix() + `Turn: ${playerNames[currentPlayer]}`;
     updateUI();
     
@@ -459,6 +455,5 @@ function getBestMovementMove() {
     return safeMoves[Math.floor(Math.random() * safeMoves.length)];
 }
 
-// Call validation directly on page load to ensure the 'Start' button state reflects the default inputs
 validateStart();
 initBoard();
