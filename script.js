@@ -504,13 +504,9 @@ class GameController {
 
         this.eventEmitter.on('characterSelected', (charId) => {
             if (Object.values(this.menuState.selections).includes(charId)) return;
-            
+
             this.menuState.selections[this.menuState.selectingFor] = charId;
-            
-            this.menuState.selectingFor = this.menuState.selectingFor === GameConfig.PLAYERS.ONE 
-                ? GameConfig.PLAYERS.TWO 
-                : GameConfig.PLAYERS.ONE;
-            
+
             this.view.renderRoster(GameConfig.ROSTER, this.menuState.selections);
             this.view.updateMenuUI(this.menuState);
         });
