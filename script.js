@@ -1,5 +1,5 @@
 let gameMode = 'pvp'; // 'pvp' or 'ai'
-let playerNames = { 1: "White", 2: "Black" };
+let playerNames = { 1: "First Player", 2: "Second Player" };
 
 const p1Input = document.getElementById('player1-name-input');
 const p2Input = document.getElementById('player2-name-input');
@@ -11,11 +11,10 @@ function setMode(mode) {
     document.getElementById('btn-ai').classList.remove('active');
     document.getElementById(mode === 'pvp' ? 'btn-pvp' : 'btn-ai').classList.add('active');
     
-    // Show/hide input for the second player
+    // Show or hide the second player input field
     const p2Group = document.getElementById('player2-name-group');
     if (mode === 'ai') {
         p2Group.style.display = 'none';
-        p2Input.value = ""; // Clear so it doesn't block validation
     } else {
         p2Group.style.display = 'flex';
     }
@@ -26,27 +25,28 @@ function validateStart() {
     let p1Valid = p1Input.value.trim().length > 0;
     let p2Valid = gameMode === 'ai' ? true : p2Input.value.trim().length > 0;
     
+    // Enable button only if required inputs have text
     startBtn.disabled = !(p1Valid && p2Valid);
 }
 
 function startGame() {
-    // Save names
-    playerNames[1] = p1Input.value.trim();
+    // Save names, fall back to default if empty (though validateStart prevents this)
+    playerNames[1] = p1Input.value.trim() || "First Player";
     if (gameMode === 'ai') {
         playerNames[2] = "AI";
     } else {
-        playerNames[2] = p2Input.value.trim();
+        playerNames[2] = p2Input.value.trim() || "Second Player";
     }
 
-    // Update game interface
+    // Update game UI
     document.getElementById('player1-name-display').innerText = playerNames[1];
     document.getElementById('player2-name-display').innerText = playerNames[2];
 
     document.getElementById('menu-screen').style.display = 'none';
     document.getElementById('game-screen').style.display = 'flex';
     
-    document.getElementById('role-label-1').innerText = gameMode === 'pvp' ? "First Player" : "You";
-    document.getElementById('role-label-2').innerText = gameMode === 'pvp' ? "Second Player" : "AI";
+    document.getElementById('role-label-1').innerText = gameMode === 'pvp' ? "Player 1" : "You";
+    document.getElementById('role-label-2').innerText = gameMode === 'pvp' ? "Player 2" : "AI";
 
     scores = {1: 0, 2: 0}; 
     updateScores(); 
@@ -54,21 +54,33 @@ function startGame() {
 }
 
 function goToMenu() {
-    // Clear text fields on return
-    p1Input.value = "";
-    p2Input.value = "";
-    startBtn.disabled = true;
+    // Return to menu, keep the typed names
     document.getElementById('menu-screen').style.display = 'flex';
     document.getElementById('game-screen').style.display = 'none';
+    validateStart();
 }
 
-// GAME LOGIC
-const POSITIONS = { 0:{x:50,y:50}, 1:{x:50,y:10}, 2:{x:78.28,y:21.72}, 3:{x:90,y:50}, 4:{x:78.28,y:78.28}, 5:{x:50,y:90}, 6:{x:21.72,y:78.28}, 7:{x:10,y:50}, 8:{x:21.72,y:21.72} };
-const ADJACENCY = { 0:[1,2,3,4,5,6,7,8], 1:[0,8,2], 2:[0,1,3], 3:[0,2,4], 4:[0,3,5], 5:[0,4,6], 6:[0,5,7], 7:[0,6,8], 8:[0,7,1] };
-const WINNING_COMBINATIONS = [ [1,0,5], [2,0,6], [3,0,7], [4,0,8], [1,2,3], [2,3,4], [3,4,5], [4,5,6], [5,6,7], [6,7,8], [7,8,1], [8,1,2] ];
+// --- GAME LOGIC ---
+const POSITIONS = { 
+    0:{x:50,y:50}, 1:{x:50,y:10}, 2:{x:78.28,y:21.72}, 
+    3:{x:90,y:50}, 4:{x:78.28,y:78.28}, 5:{x:50,y:90}, 
+    6:{x:21.72,y:78.28}, 7:{x:10,y:50}, 8:{x:21.72,y:21.72} 
+};
+
+// Which node connects to which
+const ADJACENCY = { 
+    0:[1,2,3,4,5,6,7,8], 1:[0,8,2], 2:[0,1,3], 3:[0,2,4], 
+    4:[0,3,5], 5:[0,4,6], 6:[0,5,7], 7:[0,6,8], 8:[0,7,1] 
+};
+
+const WINNING_COMBINATIONS = [ 
+    [1,0,5], [2,0,6], [3,0,7], [4,0,8], // Lines through center
+    [1,2,3], [2,3,4], [3,4,5], [4,5,6], // Curved edges
+    [5,6,7], [6,7,8], [7,8,1], [8,1,2] 
+];
 
 let phase = 'placement'; 
-let currentPlayer = 1; // 1 = You/White, 2 = AI/Black
+let currentPlayer = 1; // 1 = White, 2 = Black
 let board = Array(9).fill(null);
 let scores = {1: 0, 2: 0};
 let selectedPieceNode = null;
@@ -92,18 +104,32 @@ function initBoard() {
 }
 
 function getStatusTextPrefix() {
-    if (phase === 'placement') return "Placement: ";
-    return "Movement: ";
+    return phase === 'placement' ? "Placement: " : "Movement: ";
 }
 
 function updateUI() {
+    // Highlight active player panel
     if (gameActive) {
-        if (currentPlayer === 1) { panel1.classList.add('active'); panel2.classList.remove('active'); } 
-        else { panel1.classList.remove('active'); panel2.classList.add('active'); }
-    } else { panel1.classList.remove('active'); panel2.classList.remove('active'); }
+        if (currentPlayer === 1) { 
+            panel1.classList.add('active'); 
+            panel2.classList.remove('active'); 
+        } else { 
+            panel1.classList.remove('active'); 
+            panel2.classList.add('active'); 
+        }
+    } else { 
+        panel1.classList.remove('active'); 
+        panel2.classList.remove('active'); 
+    }
 
-    if (phase === 'placement') { document.getElementById('pool1').classList.remove('hidden'); document.getElementById('pool2').classList.remove('hidden'); } 
-    else { document.getElementById('pool1').classList.add('hidden'); document.getElementById('pool2').classList.add('hidden'); }
+    // Show or hide marble pools
+    if (phase === 'placement') { 
+        document.getElementById('pool1').classList.remove('hidden'); 
+        document.getElementById('pool2').classList.remove('hidden'); 
+    } else { 
+        document.getElementById('pool1').classList.add('hidden'); 
+        document.getElementById('pool2').classList.add('hidden'); 
+    }
 
     clearBoardHighlights();
 
@@ -125,7 +151,6 @@ function clearBoardHighlights() {
     });
 }
 
-// New function: highlights empty slots in the placement phase
 function highlightPlacementNodes() {
     if (currentPlayer === 1 || gameMode === 'pvp') {
         const nodes = document.querySelectorAll('.node');
@@ -145,7 +170,10 @@ function highlightMovablePieces() {
                 p.el.classList.add('can-move');
                 p.el.onclick = () => handleNodeClick(p.node, false);
             } else { p.el.onclick = null; }
-        } else { p.el.classList.remove('can-move'); p.el.onclick = null; }
+        } else { 
+            p.el.classList.remove('can-move'); 
+            p.el.onclick = null; 
+        }
     });
 }
 
@@ -239,7 +267,9 @@ function highlightSelectedPiece(idx) {
     if (pieceObj) pieceObj.el.classList.add('selected');
 }
 
-function clearHighlightsOfSelection() { pieceElements.forEach(p => p.el.classList.remove('selected')); }
+function clearHighlightsOfSelection() { 
+    pieceElements.forEach(p => p.el.classList.remove('selected')); 
+}
 
 function checkWin(player) {
     return WINNING_COMBINATIONS.some(combo => {
@@ -248,7 +278,10 @@ function checkWin(player) {
 }
 
 function endGame(winner) {
-    gameActive = false; scores[winner]++; updateScores(); updateUI();
+    gameActive = false; 
+    scores[winner]++; 
+    updateScores(); 
+    updateUI();
     
     const winningCombo = WINNING_COMBINATIONS.find(combo => combo.every(index => board[index] === winner));
     if (winningCombo) {
@@ -257,7 +290,10 @@ function endGame(winner) {
         });
     }
     
-    let winText = gameMode === 'ai' ? (winner === 1 ? `🎉 GLORY! YOU WIN, ${playerNames[1]}!` : "☠️ AI WINS!") : `🎉 VICTORY: ${playerNames[winner]}!`;
+    let winText = gameMode === 'ai' 
+        ? (winner === 1 ? `🎉 GLORY! YOU WIN, ${playerNames[1]}!` : "☠️ AI WINS!") 
+        : `🎉 VICTORY: ${playerNames[winner]}!`;
+    
     statusEl.innerText = winText;
     
     const rBtn = document.getElementById('resetBtn');
@@ -266,12 +302,22 @@ function endGame(winner) {
     setTimeout(() => rBtn.style.transform = "scale(1)", 200);
 }
 
-function updateScores() { document.getElementById('score1').innerText = scores[1]; document.getElementById('score2').innerText = scores[2]; }
+function updateScores() { 
+    document.getElementById('score1').innerText = scores[1]; 
+    document.getElementById('score2').innerText = scores[2]; 
+}
 
 function resetBoard() {
-    board = Array(9).fill(null); phase = 'placement'; currentPlayer = 1; 
-    selectedPieceNode = null; gameActive = true;
-    pieceElements.forEach(p => p.el.remove()); pieceElements = []; clearBoardHighlights();
+    board = Array(9).fill(null); 
+    phase = 'placement'; 
+    currentPlayer = 1; 
+    selectedPieceNode = null; 
+    gameActive = true;
+    
+    pieceElements.forEach(p => p.el.remove()); 
+    pieceElements = []; 
+    clearBoardHighlights();
+    
     document.querySelectorAll('.pool-piece').forEach(p => p.classList.remove('placed'));
     
     statusEl.innerText = getStatusTextPrefix() + `Turn: ${playerNames[1]}`;
@@ -279,7 +325,7 @@ function resetBoard() {
     updateUI();
 }
 
-// --- ARTIFICIAL INTELLIGENCE (Lookahead) ---
+// --- ARTIFICIAL INTELLIGENCE (Lookahead logic) ---
 
 function countWinningThreats(player) {
     let threats = 0;
@@ -413,4 +459,6 @@ function getBestMovementMove() {
     return safeMoves[Math.floor(Math.random() * safeMoves.length)];
 }
 
+// Call validation directly on page load to ensure the 'Start' button state reflects the default inputs
+validateStart();
 initBoard();

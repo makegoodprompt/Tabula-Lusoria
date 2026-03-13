@@ -13,25 +13,25 @@
 
     <div id="menu-screen">
         <div class="menu-section">
-            <h2>Opponent</h2>
+            <h2>Game Mode</h2>
             <div class="toggle-group">
+                <button class="toggle-btn" id="btn-ai" onclick="setMode('ai')">Single Player</button>
                 <button class="toggle-btn active" id="btn-pvp" onclick="setMode('pvp')">Two Players</button>
-                <button class="toggle-btn" id="btn-ai" onclick="setMode('ai')">Play vs AI</button>
             </div>
         </div>
 
         <div id="name-input-section">
             <div class="name-input-group">
                 <label for="player1-name-input">First Player's Name</label>
-                <input type="text" id="player1-name-input" class="name-input" placeholder="Enter name..." maxlength="12" oninput="validateStart()">
+                <input type="text" id="player1-name-input" class="name-input" value="First Player" maxlength="15" oninput="validateStart()">
             </div>
             <div class="name-input-group" id="player2-name-group">
                 <label for="player2-name-input">Second Player's Name</label>
-                <input type="text" id="player2-name-input" class="name-input" placeholder="Enter name..." maxlength="12" oninput="validateStart()">
+                <input type="text" id="player2-name-input" class="name-input" value="Second Player" maxlength="15" oninput="validateStart()">
             </div>
         </div>
 
-        <button class="start-btn" id="start-game-btn" onclick="startGame()" disabled>Enter the Arena</button>
+        <button class="start-btn" id="start-game-btn" onclick="startGame()">Enter the Arena</button>
     </div>
 
     <div id="game-screen">
@@ -39,9 +39,9 @@
             
             <div class="player-area">
                 <div class="player-panel active" id="panel-player1">
-                    <div class="player-role-label" id="role-label-1">You</div>
+                    <div class="player-role-label" id="role-label-1">Player 1</div>
                     <div class="avatar white-avatar"></div>
-                    <div class="player-name" id="player1-name-display">White</div>
+                    <div class="player-name" id="player1-name-display">First Player</div>
                     <div class="score-box">Victories: <br><span class="score-number" id="score1">0</span></div>
                 </div>
                 <div class="pieces-pool" id="pool1">
@@ -68,9 +68,9 @@
 
             <div class="player-area">
                 <div class="player-panel" id="panel-player2">
-                    <div class="player-role-label" id="role-label-2">AI</div>
+                    <div class="player-role-label" id="role-label-2">Player 2</div>
                     <div class="avatar black-avatar"></div>
-                    <div class="player-name" id="player2-name-display">Black</div>
+                    <div class="player-name" id="player2-name-display">Second Player</div>
                     <div class="score-box">Victories: <br><span class="score-number" id="score2">0</span></div>
                 </div>
                 <div class="pieces-pool" id="pool2">
