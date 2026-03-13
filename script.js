@@ -28,8 +28,8 @@ const GameConfig = Object.freeze({
         [1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 6],
         [5, 6, 7], [6, 7, 8], [7, 8, 1], [8, 1, 2]
     ],
-    MODES: {
-        PVP: 'pvp',
+    PLAYER_TYPES: {
+        HUMAN: 'human',
         AI: 'ai'
     },
     PHASES: {
@@ -39,7 +39,15 @@ const GameConfig = Object.freeze({
     PLAYERS: {
         ONE: 1,
         TWO: 2
-    }
+    },
+    ROSTER: [
+        { id: 'caesar', name: 'Julius Caesar', img: 'https://placehold.co/150x150/2a1f18/d4af37?text=Caesar' },
+        { id: 'cicero', name: 'Cicero', img: 'https://placehold.co/150x150/2a1f18/d4af37?text=Cicero' },
+        { id: 'brutus', name: 'Brutus', img: 'https://placehold.co/150x150/2a1f18/d4af37?text=Brutus' },
+        { id: 'antony', name: 'Mark Antony', img: 'https://placehold.co/150x150/2a1f18/d4af37?text=Antony' },
+        { id: 'aurelius', name: 'Marcus Aurelius', img: 'https://placehold.co/150x150/2a1f18/d4af37?text=Aurelius' },
+        { id: 'scipio', name: 'Scipio Africanus', img: 'https://placehold.co/150x150/2a1f18/d4af37?text=Scipio' }
+    ]
 });
 
 class GameBoard {
@@ -60,9 +68,7 @@ class GameBoard {
     }
 
     placePiece(nodeIndex, playerId) {
-        if (this.state[nodeIndex] !== null) {
-            throw new Error('Node is already occupied.');
-        }
+        if (this.state[nodeIndex] !== null) throw new Error('Node is already occupied.');
         this.state[nodeIndex] = playerId;
     }
 
@@ -86,20 +92,13 @@ class GameBoard {
         ) || null;
     }
 
-    hasAvailableMoves(playerId) {
-        const playerNodes = this.getPlayerNodes(playerId);
-        return playerNodes.some(node =>
-            GameConfig.ADJACENCY[node].some(adj => this.state[adj] === null)
-        );
-    }
-
     clone() {
         return new GameBoard(this.state);
     }
 }
 
 class AIStrategy {
-    static calculateBestPlacement(board, aiId, humanId) {
+    static calculateBestPlacement(board, aiId, opponentId) {
         const emptyNodes = board.getEmptyNodes();
 
         for (const node of emptyNodes) {
@@ -110,32 +109,32 @@ class AIStrategy {
 
         for (const node of emptyNodes) {
             const testBoard = board.clone();
-            testBoard.placePiece(node, humanId);
-            if (testBoard.isWinner(humanId)) return node;
+            testBoard.placePiece(node, opponentId);
+            if (testBoard.isWinner(opponentId)) return node;
         }
 
         let bestNodes = [];
-        let minHumanThreats = Infinity;
+        let minOpponentThreats = Infinity;
 
         for (const aiMove of emptyNodes) {
             const testBoard = board.clone();
             testBoard.placePiece(aiMove, aiId);
-            let maxThreatsForHuman = 0;
+            let maxThreatsForOpponent = 0;
 
             const remainingEmpty = testBoard.getEmptyNodes();
-            for (const humanMove of remainingEmpty) {
+            for (const opponentMove of remainingEmpty) {
                 const counterBoard = testBoard.clone();
-                counterBoard.placePiece(humanMove, humanId);
-                const threats = this._countWinningThreats(counterBoard, humanId);
-                if (threats > maxThreatsForHuman) {
-                    maxThreatsForHuman = threats;
+                counterBoard.placePiece(opponentMove, opponentId);
+                const threats = this._countWinningThreats(counterBoard, opponentId);
+                if (threats > maxThreatsForOpponent) {
+                    maxThreatsForOpponent = threats;
                 }
             }
 
-            if (maxThreatsForHuman < minHumanThreats) {
-                minHumanThreats = maxThreatsForHuman;
+            if (maxThreatsForOpponent < minOpponentThreats) {
+                minOpponentThreats = maxThreatsForOpponent;
                 bestNodes = [aiMove];
-            } else if (maxThreatsForHuman === minHumanThreats) {
+            } else if (maxThreatsForOpponent === minOpponentThreats) {
                 bestNodes.push(aiMove);
             }
         }
@@ -144,7 +143,7 @@ class AIStrategy {
         return bestNodes[Math.floor(Math.random() * bestNodes.length)];
     }
 
-    static calculateBestMovement(board, aiId, humanId) {
+    static calculateBestMovement(board, aiId, opponentId) {
         const aiNodes = board.getPlayerNodes(aiId);
         const validMoves = [];
 
@@ -169,24 +168,24 @@ class AIStrategy {
         for (const aiMove of validMoves) {
             const testBoard = board.clone();
             testBoard.movePiece(aiMove.from, aiMove.to, aiId);
-            let givesHumanWin = false;
+            let givesOpponentWin = false;
 
-            const humanNodes = testBoard.getPlayerNodes(humanId);
-            for (const hNode of humanNodes) {
-                for (const adj of GameConfig.ADJACENCY[hNode]) {
+            const opponentNodes = testBoard.getPlayerNodes(opponentId);
+            for (const oNode of opponentNodes) {
+                for (const adj of GameConfig.ADJACENCY[oNode]) {
                     if (testBoard.state[adj] === null) {
                         const counterBoard = testBoard.clone();
-                        counterBoard.movePiece(hNode, adj, humanId);
-                        if (counterBoard.isWinner(humanId)) {
-                            givesHumanWin = true;
+                        counterBoard.movePiece(oNode, adj, opponentId);
+                        if (counterBoard.isWinner(opponentId)) {
+                            givesOpponentWin = true;
                         }
                     }
-                    if (givesHumanWin) break;
+                    if (givesOpponentWin) break;
                 }
-                if (givesHumanWin) break;
+                if (givesOpponentWin) break;
             }
 
-            if (!givesHumanWin) safeMoves.push(aiMove);
+            if (!givesOpponentWin) safeMoves.push(aiMove);
         }
 
         if (safeMoves.length === 0) {
@@ -218,26 +217,34 @@ class DOMView {
         this.elements = {
             menuScreen: document.getElementById('menu-screen'),
             gameScreen: document.getElementById('game-screen'),
-            btnPvp: document.getElementById('btn-pvp'),
-            btnAi: document.getElementById('btn-ai'),
-            p1Input: document.getElementById('player1-name-input'),
-            p2Input: document.getElementById('player2-name-input'),
-            p2Group: document.getElementById('player2-name-group'),
+            rosterGrid: document.getElementById('roster-grid'),
+            p1SelectorBox: document.getElementById('p1-selector-box'),
+            p2SelectorBox: document.getElementById('p2-selector-box'),
+            p1MenuPortrait: document.getElementById('p1-menu-portrait'),
+            p2MenuPortrait: document.getElementById('p2-menu-portrait'),
+            p1MenuName: document.getElementById('p1-menu-name'),
+            p2MenuName: document.getElementById('p2-menu-name'),
             startBtn: document.getElementById('start-game-btn'),
+            
+            gameP1Avatar: document.getElementById('game-p1-avatar'),
+            gameP2Avatar: document.getElementById('game-p2-avatar'),
             p1NameDisplay: document.getElementById('player1-name-display'),
             p2NameDisplay: document.getElementById('player2-name-display'),
             roleLabel1: document.getElementById('role-label-1'),
             roleLabel2: document.getElementById('role-label-2'),
             score1: document.getElementById('score1'),
             score2: document.getElementById('score2'),
+            
             boardEl: document.getElementById('board'),
             statusEl: document.getElementById('status'),
             panel1: document.getElementById('panel-player1'),
             panel2: document.getElementById('panel-player2'),
             pool1: document.getElementById('pool1'),
             pool2: document.getElementById('pool2'),
-            resetBtn: document.getElementById('resetBtn')
+            btnMenu: document.getElementById('btn-menu'),
+            btnRestart: document.getElementById('btn-restart')
         };
+        
         this.pieceElements = new Map();
         this.nodeElements = [];
         this._initializeNodes();
@@ -255,40 +262,77 @@ class DOMView {
         }
     }
 
-    bindMenuEvents(onModeSelect, onStart, onReturnToMenu, onRestart) {
-        this.elements.btnPvp.addEventListener('click', () => onModeSelect(GameConfig.MODES.PVP));
-        this.elements.btnAi.addEventListener('click', () => onModeSelect(GameConfig.MODES.AI));
-        this.elements.p1Input.addEventListener('input', () => this.eventEmitter.emit('validateStart'));
-        this.elements.p2Input.addEventListener('input', () => this.eventEmitter.emit('validateStart'));
-        this.elements.startBtn.addEventListener('click', onStart);
-        document.querySelector('.controls .action-btn:not(.primary)').addEventListener('click', onReturnToMenu);
-        this.elements.resetBtn.addEventListener('click', onRestart);
+    bindMenuEvents() {
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const player = parseInt(e.target.dataset.player);
+                const type = e.target.dataset.type;
+                this.eventEmitter.emit('playerTypeChanged', { player, type });
+            });
+        });
+
+        this.elements.p1SelectorBox.addEventListener('click', () => this.eventEmitter.emit('focusSelector', GameConfig.PLAYERS.ONE));
+        this.elements.p2SelectorBox.addEventListener('click', () => this.eventEmitter.emit('focusSelector', GameConfig.PLAYERS.TWO));
+        this.elements.startBtn.addEventListener('click', () => this.eventEmitter.emit('startGame'));
+        this.elements.btnMenu.addEventListener('click', () => this.eventEmitter.emit('returnToMenu'));
+        this.elements.btnRestart.addEventListener('click', () => this.eventEmitter.emit('restartRound'));
     }
 
-    updateMenuSelection(mode) {
-        this.elements.btnPvp.classList.toggle('active', mode === GameConfig.MODES.PVP);
-        this.elements.btnAi.classList.toggle('active', mode === GameConfig.MODES.AI);
-        this.elements.p2Group.style.display = mode === GameConfig.MODES.AI ? 'none' : 'flex';
+    renderRoster(roster, selections) {
+        this.elements.rosterGrid.innerHTML = '';
+        roster.forEach(char => {
+            const img = document.createElement('img');
+            img.src = char.img;
+            img.className = 'roster-char';
+            img.alt = char.name;
+            
+            if (selections[GameConfig.PLAYERS.ONE] === char.id) {
+                img.classList.add('p1-selected');
+            } else if (selections[GameConfig.PLAYERS.TWO] === char.id) {
+                img.classList.add('p2-selected');
+            }
+
+            if (Object.values(selections).includes(char.id)) {
+                img.classList.add('disabled');
+            }
+
+            img.addEventListener('click', () => this.eventEmitter.emit('characterSelected', char.id));
+            this.elements.rosterGrid.appendChild(img);
+        });
     }
 
-    setStartButtonState(isValid) {
-        this.elements.startBtn.disabled = !isValid;
+    updateMenuUI(state) {
+        document.querySelectorAll(`.toggle-btn[data-player="1"]`).forEach(b => b.classList.toggle('active', b.dataset.type === state.playerTypes[GameConfig.PLAYERS.ONE]));
+        document.querySelectorAll(`.toggle-btn[data-player="2"]`).forEach(b => b.classList.toggle('active', b.dataset.type === state.playerTypes[GameConfig.PLAYERS.TWO]));
+
+        this.elements.p1SelectorBox.classList.toggle('active-selector', state.selectingFor === GameConfig.PLAYERS.ONE);
+        this.elements.p2SelectorBox.classList.toggle('active-selector', state.selectingFor === GameConfig.PLAYERS.TWO);
+
+        const p1Char = GameConfig.ROSTER.find(c => c.id === state.selections[GameConfig.PLAYERS.ONE]);
+        this.elements.p1MenuPortrait.src = p1Char ? p1Char.img : 'https://placehold.co/150x150/2a1f18/d4af37?text=?';
+        this.elements.p1MenuName.innerText = p1Char ? p1Char.name : 'Select Player 1';
+
+        const p2Char = GameConfig.ROSTER.find(c => c.id === state.selections[GameConfig.PLAYERS.TWO]);
+        this.elements.p2MenuPortrait.src = p2Char ? p2Char.img : 'https://placehold.co/150x150/2a1f18/d4af37?text=?';
+        this.elements.p2MenuName.innerText = p2Char ? p2Char.name : 'Select Player 2';
+
+        this.elements.startBtn.disabled = !(state.selections[GameConfig.PLAYERS.ONE] && state.selections[GameConfig.PLAYERS.TWO]);
     }
 
-    getPlayerInputNames() {
-        return {
-            p1: this.elements.p1Input.value.trim(),
-            p2: this.elements.p2Input.value.trim()
-        };
-    }
-
-    showGameScreen(playerNames, mode) {
+    showGameScreen(state) {
         this.elements.menuScreen.style.display = 'none';
         this.elements.gameScreen.style.display = 'flex';
-        this.elements.p1NameDisplay.innerText = playerNames[GameConfig.PLAYERS.ONE];
-        this.elements.p2NameDisplay.innerText = playerNames[GameConfig.PLAYERS.TWO];
-        this.elements.roleLabel1.innerText = mode === GameConfig.MODES.PVP ? "Player 1" : "You";
-        this.elements.roleLabel2.innerText = mode === GameConfig.MODES.PVP ? "Player 2" : "AI";
+
+        const p1Char = GameConfig.ROSTER.find(c => c.id === state.selections[GameConfig.PLAYERS.ONE]);
+        const p2Char = GameConfig.ROSTER.find(c => c.id === state.selections[GameConfig.PLAYERS.TWO]);
+
+        this.elements.gameP1Avatar.src = p1Char.img;
+        this.elements.p1NameDisplay.innerText = p1Char.name;
+        this.elements.roleLabel1.innerText = state.playerTypes[GameConfig.PLAYERS.ONE].toUpperCase();
+
+        this.elements.gameP2Avatar.src = p2Char.img;
+        this.elements.p2NameDisplay.innerText = p2Char.name;
+        this.elements.roleLabel2.innerText = state.playerTypes[GameConfig.PLAYERS.TWO].toUpperCase();
     }
 
     showMenuScreen() {
@@ -322,7 +366,8 @@ class DOMView {
         this.pieceElements.forEach(pieceData => pieceData.el.onclick = null);
     }
 
-    highlightPlacementNodes(boardState) {
+    highlightPlacementNodes(boardState, isHumanTurn) {
+        if (!isHumanTurn) return;
         boardState.forEach((player, idx) => {
             if (player === null) {
                 this.nodeElements[idx].classList.add('can-place');
@@ -330,11 +375,11 @@ class DOMView {
         });
     }
 
-    highlightMovablePieces(boardState, currentPlayer) {
+    highlightMovablePieces(boardState, currentPlayer, isHumanTurn) {
         this.pieceElements.forEach((pieceData, nodeId) => {
             if (pieceData.player === currentPlayer) {
                 const canMove = GameConfig.ADJACENCY[nodeId].some(adj => boardState[adj] === null);
-                if (canMove) {
+                if (canMove && isHumanTurn) {
                     pieceData.el.classList.add('can-move');
                     pieceData.el.onclick = () => this.eventEmitter.emit('nodeClicked', nodeId);
                 }
@@ -397,13 +442,13 @@ class DOMView {
     }
 
     animateRestartButton() {
-        this.elements.resetBtn.innerText = "Next Battle";
-        this.elements.resetBtn.style.transform = "scale(1.1)";
-        setTimeout(() => this.elements.resetBtn.style.transform = "scale(1)", 200);
+        this.elements.btnRestart.innerText = "Next Battle";
+        this.elements.btnRestart.style.transform = "scale(1.1)";
+        setTimeout(() => this.elements.btnRestart.style.transform = "scale(1)", 200);
     }
 
     resetRestartButton() {
-        this.elements.resetBtn.innerText = "Restart Round";
+        this.elements.btnRestart.innerText = "Restart Round";
     }
 }
 
@@ -426,9 +471,14 @@ class GameController {
     constructor(view, eventEmitter) {
         this.view = view;
         this.eventEmitter = eventEmitter;
+        
+        this.menuState = {
+            playerTypes: { [GameConfig.PLAYERS.ONE]: GameConfig.PLAYER_TYPES.HUMAN, [GameConfig.PLAYERS.TWO]: GameConfig.PLAYER_TYPES.AI },
+            selections: { [GameConfig.PLAYERS.ONE]: null, [GameConfig.PLAYERS.TWO]: null },
+            selectingFor: GameConfig.PLAYERS.ONE
+        };
+
         this.board = new GameBoard();
-        this.mode = GameConfig.MODES.PVP;
-        this.playerNames = {};
         this.scores = { [GameConfig.PLAYERS.ONE]: 0, [GameConfig.PLAYERS.TWO]: 0 };
         this.phase = GameConfig.PHASES.PLACEMENT;
         this.currentPlayer = GameConfig.PLAYERS.ONE;
@@ -438,51 +488,57 @@ class GameController {
         this._setupEvents();
     }
 
-    _setupEvents() {
-        this.eventEmitter.on('validateStart', () => this._validateMenuForm());
-        this.eventEmitter.on('nodeClicked', (nodeIndex) => this._handleInteraction(nodeIndex, false));
-
-        this.view.bindMenuEvents(
-            (mode) => this._setMode(mode),
-            () => this._startNewSession(),
-            () => this._returnToMenu(),
-            () => this._restartRound()
-        );
-    }
-
     init() {
-        this._setMode(GameConfig.MODES.PVP);
-        this._validateMenuForm();
+        this.view.bindMenuEvents();
+        this._renderMenu();
     }
 
-    _setMode(mode) {
-        this.mode = mode;
-        this.view.updateMenuSelection(mode);
-        this._validateMenuForm();
+    _setupEvents() {
+        this.eventEmitter.on('playerTypeChanged', (data) => {
+            this.menuState.playerTypes[data.player] = data.type;
+            this._renderMenu();
+        });
+
+        this.eventEmitter.on('focusSelector', (playerId) => {
+            this.menuState.selectingFor = playerId;
+            this.menuState.selections[playerId] = null;
+            this._renderMenu();
+        });
+
+        this.eventEmitter.on('characterSelected', (charId) => {
+            if (Object.values(this.menuState.selections).includes(charId)) return;
+            
+            this.menuState.selections[this.menuState.selectingFor] = charId;
+            
+            if (this.menuState.selectingFor === GameConfig.PLAYERS.ONE && !this.menuState.selections[GameConfig.PLAYERS.TWO]) {
+                this.menuState.selectingFor = GameConfig.PLAYERS.TWO;
+            } else if (this.menuState.selectingFor === GameConfig.PLAYERS.TWO && !this.menuState.selections[GameConfig.PLAYERS.ONE]) {
+                this.menuState.selectingFor = GameConfig.PLAYERS.ONE;
+            }
+            
+            this._renderMenu();
+        });
+
+        this.eventEmitter.on('startGame', () => this._startNewSession());
+        this.eventEmitter.on('returnToMenu', () => {
+            this.gameActive = false;
+            this.view.showMenuScreen();
+            this._renderMenu();
+        });
+        this.eventEmitter.on('restartRound', () => this._restartRound());
+        this.eventEmitter.on('nodeClicked', (nodeIndex) => this._handleInteraction(nodeIndex, false));
     }
 
-    _validateMenuForm() {
-        const inputs = this.view.getPlayerInputNames();
-        const isP1Valid = inputs.p1.length > 0;
-        const isP2Valid = this.mode === GameConfig.MODES.AI ? true : inputs.p2.length > 0;
-        this.view.setStartButtonState(isP1Valid && isP2Valid);
+    _renderMenu() {
+        this.view.renderRoster(GameConfig.ROSTER, this.menuState.selections);
+        this.view.updateMenuUI(this.menuState);
     }
 
     _startNewSession() {
-        const inputs = this.view.getPlayerInputNames();
-        this.playerNames[GameConfig.PLAYERS.ONE] = inputs.p1 || "First Player";
-        this.playerNames[GameConfig.PLAYERS.TWO] = this.mode === GameConfig.MODES.AI ? "AI" : (inputs.p2 || "Second Player");
-        
         this.scores = { [GameConfig.PLAYERS.ONE]: 0, [GameConfig.PLAYERS.TWO]: 0 };
-        this.view.showGameScreen(this.playerNames, this.mode);
+        this.view.showGameScreen(this.menuState);
         this.view.updateScores(this.scores);
         this._restartRound();
-    }
-
-    _returnToMenu() {
-        this.gameActive = false;
-        this.view.showMenuScreen();
-        this._validateMenuForm();
     }
 
     _restartRound() {
@@ -495,11 +551,12 @@ class GameController {
         this.view.clearPieces();
         this.view.resetRestartButton();
         this._updateGameStateUI();
+        this._triggerAITurnIfNeeded();
     }
 
     _handleInteraction(nodeIndex, isAiOrigin) {
         if (!this.gameActive) return;
-        if (this.mode === GameConfig.MODES.AI && this.currentPlayer === GameConfig.PLAYERS.TWO && !isAiOrigin) return;
+        if (this.menuState.playerTypes[this.currentPlayer] === GameConfig.PLAYER_TYPES.AI && !isAiOrigin) return;
 
         if (this.phase === GameConfig.PHASES.PLACEMENT) {
             this._processPlacement(nodeIndex);
@@ -557,7 +614,7 @@ class GameController {
             }
         }
 
-        if (this.selectedPieceNode !== null && this.currentPlayer === GameConfig.PLAYERS.ONE) {
+        if (this.selectedPieceNode !== null && this.menuState.playerTypes[this.currentPlayer] === GameConfig.PLAYER_TYPES.HUMAN) {
             this.selectedPieceNode = null;
             this._updateGameStateUI();
         }
@@ -570,19 +627,21 @@ class GameController {
     }
 
     _triggerAITurnIfNeeded() {
-        if (this.gameActive && this.mode === GameConfig.MODES.AI && this.currentPlayer === GameConfig.PLAYERS.TWO) {
+        if (this.gameActive && this.menuState.playerTypes[this.currentPlayer] === GameConfig.PLAYER_TYPES.AI) {
             setTimeout(() => this._executeAIMove(), 800);
         }
     }
 
     _executeAIMove() {
-        if (!this.gameActive || this.currentPlayer !== GameConfig.PLAYERS.TWO) return;
+        if (!this.gameActive || this.menuState.playerTypes[this.currentPlayer] !== GameConfig.PLAYER_TYPES.AI) return;
+
+        const opponentId = this.currentPlayer === GameConfig.PLAYERS.ONE ? GameConfig.PLAYERS.TWO : GameConfig.PLAYERS.ONE;
 
         if (this.phase === GameConfig.PHASES.PLACEMENT) {
-            const bestNode = AIStrategy.calculateBestPlacement(this.board, GameConfig.PLAYERS.TWO, GameConfig.PLAYERS.ONE);
+            const bestNode = AIStrategy.calculateBestPlacement(this.board, this.currentPlayer, opponentId);
             this._handleInteraction(bestNode, true);
         } else if (this.phase === GameConfig.PHASES.MOVEMENT) {
-            const bestMove = AIStrategy.calculateBestMovement(this.board, GameConfig.PLAYERS.TWO, GameConfig.PLAYERS.ONE);
+            const bestMove = AIStrategy.calculateBestMovement(this.board, this.currentPlayer, opponentId);
             if (bestMove) {
                 this._handleInteraction(bestMove.from, true);
                 setTimeout(() => {
@@ -604,16 +663,10 @@ class GameController {
             this.view.highlightWinningCombination(winningCombo, winnerId);
         }
 
-        let victoryText = "";
-        if (this.mode === GameConfig.MODES.AI) {
-            victoryText = winnerId === GameConfig.PLAYERS.ONE 
-                ? `GLORY! YOU WIN, ${this.playerNames[GameConfig.PLAYERS.ONE]}!` 
-                : "AI WINS!";
-        } else {
-            victoryText = `VICTORY: ${this.playerNames[winnerId]}!`;
-        }
-
-        this.view.setStatus(victoryText);
+        const charId = this.menuState.selections[winnerId];
+        const charName = GameConfig.ROSTER.find(c => c.id === charId).name;
+        
+        this.view.setStatus(`VICTORY: ${charName.toUpperCase()}!`);
         this.view.animateRestartButton();
     }
 
@@ -625,13 +678,13 @@ class GameController {
         if (this.gameActive) {
             this._updateStatusText();
 
+            const isHumanTurn = this.menuState.playerTypes[this.currentPlayer] === GameConfig.PLAYER_TYPES.HUMAN;
+
             if (this.phase === GameConfig.PHASES.PLACEMENT) {
-                if (this.currentPlayer === GameConfig.PLAYERS.ONE || this.mode === GameConfig.MODES.PVP) {
-                    this.view.highlightPlacementNodes(this.board.state);
-                }
+                this.view.highlightPlacementNodes(this.board.state, isHumanTurn);
             } else if (this.phase === GameConfig.PHASES.MOVEMENT) {
                 if (this.selectedPieceNode === null) {
-                    this.view.highlightMovablePieces(this.board.state, this.currentPlayer);
+                    this.view.highlightMovablePieces(this.board.state, this.currentPlayer, isHumanTurn);
                 } else {
                     this.view.highlightTargetNodes(this.selectedPieceNode, this.board.state);
                 }
@@ -640,20 +693,23 @@ class GameController {
     }
 
     _updateStatusText() {
-        const prefix = this.phase === GameConfig.PHASES.PLACEMENT ? "Placement: " : "Movement: ";
+        const charId = this.menuState.selections[this.currentPlayer];
+        const charName = GameConfig.ROSTER.find(c => c.id === charId).name;
+        const isAI = this.menuState.playerTypes[this.currentPlayer] === GameConfig.PLAYER_TYPES.AI;
         
-        if (this.phase === GameConfig.PHASES.MOVEMENT && this.selectedPieceNode !== null && this.currentPlayer === GameConfig.PLAYERS.ONE) {
+        if (this.phase === GameConfig.PHASES.MOVEMENT && this.selectedPieceNode !== null && !isAI) {
             this.view.setStatus("Select destination");
             return;
         }
         
-        if (this.mode === GameConfig.MODES.AI && this.currentPlayer === GameConfig.PLAYERS.TWO) {
-            const actionText = this.phase === GameConfig.PHASES.PLACEMENT ? "AI's Turn..." : (this.selectedPieceNode !== null ? "AI is analyzing move..." : "AI's Turn...");
+        if (isAI) {
+            const actionText = this.phase === GameConfig.PHASES.PLACEMENT ? `${charName} is thinking...` : (this.selectedPieceNode !== null ? `${charName} is moving...` : `${charName} is analyzing...`);
             this.view.setStatus(actionText);
             return;
         }
         
-        this.view.setStatus(`${prefix}Turn: ${this.playerNames[this.currentPlayer]}`);
+        const prefix = this.phase === GameConfig.PHASES.PLACEMENT ? "Placement: " : "Movement: ";
+        this.view.setStatus(`${prefix}${charName}'s Turn`);
     }
 }
 

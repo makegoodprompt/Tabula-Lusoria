@@ -5,7 +5,6 @@
 }
 
 body {
-    /* Pompeian red and old fresco effect */
     background-color: #5c1a15;
     background-image: 
         radial-gradient(circle at 50% 50%, #7b241c 0%, #2e0c0a 100%),
@@ -26,7 +25,7 @@ h1 {
     font-weight: 900;
     text-shadow: 2px 4px 8px rgba(0,0,0,0.9), 0 0 20px rgba(212, 175, 55, 0.4);
     letter-spacing: 5px;
-    color: #d4af37; /* Roman Gold */
+    color: #d4af37;
     text-align: center;
     margin-top: 10px;
     margin-bottom: 5px;
@@ -43,12 +42,10 @@ p.subtitle {
     text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
 }
 
-/* --- MAIN MENU SCREEN --- */
 #menu-screen {
     display: flex; 
     flex-direction: column; 
     align-items: center;
-    /* Travertine Marble */
     background: linear-gradient(135deg, #f4ece1, #d6caba);
     padding: 40px 60px; 
     border-radius: 4px; 
@@ -56,10 +53,9 @@ p.subtitle {
     box-shadow: 0 0 0 4px #d4af37, 0 30px 60px rgba(0,0,0,0.9);
     color: #2a1f18; 
     position: relative; 
-    min-width: 450px;
+    min-width: 800px;
 }
 
-/* Decorative corners */
 #menu-screen::before, #menu-screen::after { 
     content: ''; 
     position: absolute; 
@@ -70,95 +66,143 @@ p.subtitle {
 #menu-screen::before { top: 15px; left: 15px; border-right: none; border-bottom: none; }
 #menu-screen::after { bottom: 15px; right: 15px; border-left: none; border-top: none; }
 
-.menu-section { 
-    margin-bottom: 25px; 
-    width: 100%; 
-    text-align: center; 
-}
-
-.menu-section h2 { 
-    font-size: 1.5rem; 
-    margin-bottom: 15px; 
+.menu-title {
+    font-size: 1.8rem; 
+    margin-bottom: 30px; 
     color: #3d2e1f; 
     border-bottom: 2px solid #a39b8d; 
-    padding-bottom: 5px; 
+    padding-bottom: 10px; 
     text-transform: uppercase; 
     font-weight: 900;
+}
+
+.mk-selection-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 40px;
+    width: 100%;
+    margin-bottom: 30px;
+}
+
+.menu-player-config {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
 }
 
 .toggle-group { 
     display: flex; 
     justify-content: center; 
-    gap: 15px; 
-    margin-bottom: 20px; 
+    gap: 10px; 
 }
 
 .toggle-btn {
     background: #e8e5df; 
     color: #3d2e1f; 
     border: 2px solid #a39b8d;
-    padding: 12px 20px; 
+    padding: 8px 15px; 
     font-family: 'Cinzel', serif; 
-    font-size: 1.1rem; 
+    font-size: 0.9rem; 
     font-weight: bold;
     cursor: pointer; 
     border-radius: 4px; 
     transition: all 0.3s; 
-    min-width: 170px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-}
-
-.toggle-btn:hover { 
-    background: #fffcf5; 
-    transform: translateY(-2px); 
+    min-width: 90px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .toggle-btn.active {
     background: #d4af37; 
     color: #111; 
     border-color: #f3c93f;
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.6), inset 0 0 10px rgba(255,255,255,0.5);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.6), inset 0 0 5px rgba(255,255,255,0.5);
 }
 
-/* Name input section */
-#name-input-section {
-    display: flex; 
-    flex-direction: column; 
-    gap: 15px; 
-    width: 100%; 
-    max-width: 350px;
-    margin-bottom: 25px;
+.portrait-container {
+    padding: 10px;
+    border: 4px solid transparent;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    cursor: pointer;
 }
 
-.name-input-group { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 5px; 
-    text-align: left; 
+.p1-portrait-container.active-selector {
+    border-color: #d4af37;
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+    background: rgba(212, 175, 55, 0.1);
 }
 
-.name-input-group label { 
-    font-weight: bold; 
-    color: #3d2e1f; 
-    font-size: 0.9rem; 
+.p2-portrait-container.active-selector {
+    border-color: #a32222;
+    box-shadow: 0 0 20px rgba(163, 34, 34, 0.6);
+    background: rgba(163, 34, 34, 0.1);
+}
+
+.large-portrait {
+    width: 140px;
+    height: 140px;
+    border: 4px solid #3d2e1f;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.6);
+    object-fit: cover;
+    background-color: #2a1f18;
+}
+
+.champion-name {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #3d2e1f;
     text-transform: uppercase;
 }
 
-.name-input {
-    padding: 10px 15px; 
-    font-family: 'Cinzel', serif; 
-    font-size: 1rem;
-    border: 2px solid #8b7355; 
-    border-radius: 4px; 
-    background: #fffcf5; 
-    color: #1a1510;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+.roster-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    padding: 20px;
+    background: rgba(0,0,0,0.05);
+    border-radius: 4px;
+    border: 2px solid #a39b8d;
 }
 
-.name-input:focus { 
-    outline: none; 
-    border-color: #d4af37; 
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 0 10px rgba(212, 175, 55, 0.5); 
+.roster-char {
+    width: 80px;
+    height: 80px;
+    border: 3px solid #8b7355;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    object-fit: cover;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+}
+
+.roster-char:hover:not(.disabled) {
+    transform: scale(1.1);
+    border-color: #d4af37;
+    z-index: 10;
+}
+
+.roster-char.p1-selected {
+    border-color: #d4af37;
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.8);
+    transform: scale(1.05);
+}
+
+.roster-char.p2-selected {
+    border-color: #a32222;
+    box-shadow: 0 0 15px rgba(163, 34, 34, 0.8);
+    transform: scale(1.05);
+}
+
+.roster-char.disabled {
+    opacity: 0.3;
+    pointer-events: none;
+    filter: grayscale(100%);
+}
+
+.mirror-img {
+    transform: scaleX(-1);
 }
 
 .start-btn {
@@ -178,7 +222,7 @@ p.subtitle {
     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
 }
 
-.start-btn:hover { 
+.start-btn:hover:not(:disabled) { 
     transform: scale(1.05); 
     box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4); 
 }
@@ -192,7 +236,6 @@ p.subtitle {
     text-shadow: none;
 }
 
-/* --- GAME SCREEN --- */
 #game-screen { 
     display: none; 
     flex-direction: column; 
@@ -229,7 +272,7 @@ p.subtitle {
     opacity: 0.7; 
     transform: scale(0.95); 
     position: relative;
-    background: linear-gradient(135deg, #e6dfd3, #bbaea0); /* Sandstone */
+    background: linear-gradient(135deg, #e6dfd3, #bbaea0);
     box-shadow: 0 15px 30px rgba(0,0,0,0.8), inset 0 0 15px rgba(255,255,255,0.4);
     color: #2a1f18; 
     border-radius: 4px;
@@ -252,7 +295,7 @@ p.subtitle {
 }
 
 .player-name { 
-    font-size: 1.6rem; 
+    font-size: 1.4rem; 
     font-weight: 900; 
     margin: 15px 0 5px 0; 
     text-transform: uppercase; 
@@ -279,18 +322,17 @@ p.subtitle {
     text-shadow: 1px 1px 0px rgba(255,255,255,0.5); 
 }
 
-/* Stone Avatars */
 .avatar { 
-    width: 90px; 
-    height: 90px; 
-    border-radius: 50%; 
+    width: 120px; 
+    height: 120px; 
+    border-radius: 4px; 
     margin-bottom: 5px; 
     margin-top: 15px; 
     border: 4px solid #d4af37; 
     box-shadow: 0 6px 12px rgba(0,0,0,0.6), inset 0 0 20px rgba(0,0,0,0.8); 
+    object-fit: cover;
+    background-color: #2a1f18;
 }
-.avatar.white-avatar { background: radial-gradient(circle, #f4ece1 30%, #b89947 90%); }
-.avatar.black-avatar { background: radial-gradient(circle, #2c2c2c 30%, #5a1818 90%); }
 
 .pieces-pool { 
     display: flex; 
@@ -328,7 +370,6 @@ p.subtitle {
     align-items: center; 
 }
 
-/* Golden Status Plaque */
 #status { 
     font-size: 1.3rem; 
     margin-bottom: 25px; 
@@ -345,7 +386,6 @@ p.subtitle {
     letter-spacing: 1px;
 }
 
-/* --- IMAGE BOARD CONTAINER --- */
 .board-container {
     width: 500px; 
     height: 500px; 
@@ -362,7 +402,20 @@ p.subtitle {
     width: 100%; height: 100%; 
 }
 
-/* Clickable nodes (holes). Transparent to show the JPG underneath */
+.svg-lines { 
+    position: absolute; 
+    top: 0; left: 0; 
+    width: 100%; height: 100%; 
+    pointer-events: none; 
+}
+
+.svg-lines line, .svg-lines circle { 
+    stroke: #6e5c47; 
+    stroke-width: 8; 
+    fill: none; 
+    filter: drop-shadow(1.5px 1.5px 1px rgba(255, 255, 255, 0.8)) drop-shadow(-1.5px -1.5px 2px rgba(0, 0, 0, 0.7));
+}
+
 .node { 
     position: absolute; 
     width: 64px; 
@@ -376,7 +429,6 @@ p.subtitle {
     border: 2px solid transparent;
 }
 
-/* Glow on hover */
 .node:hover { 
     background: rgba(212, 175, 55, 0.3); 
     border-color: rgba(212, 175, 55, 0.8); 
@@ -408,7 +460,6 @@ p.subtitle {
     100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; } 
 }
 
-/* PIECES (Stone spheres) */
 .piece, .pool-piece { 
     position: absolute; 
     width: 50px; 
@@ -431,6 +482,7 @@ p.subtitle {
     background: radial-gradient(circle at 30% 30%, #ffffff, #e8e5df 40%, #a39b8d);
     box-shadow: 3px 8px 15px rgba(0,0,0,0.7), inset -3px -3px 10px rgba(0,0,0,0.4), inset 3px 3px 10px rgba(255,255,255,1);
 }
+
 .piece.player2, .pool-piece.black { 
     background: radial-gradient(circle at 30% 30%, #555, #1a1a1a 50%, #000);
     box-shadow: 3px 8px 15px rgba(0,0,0,0.8), inset -3px -3px 10px rgba(0,0,0,0.9), inset 3px 3px 8px rgba(255,255,255,0.4);
@@ -442,7 +494,6 @@ p.subtitle {
     z-index: 15;
 }
 
-/* Highlight PIECES that can be moved */
 .piece.can-move { 
     animation: pulse-piece 2s infinite ease-in-out; 
     cursor: pointer; 
@@ -467,7 +518,6 @@ p.subtitle {
     to { transform: translate(-50%, -50%) scale(1.3); } 
 }
 
-/* --- ACTION BUTTONS (Bottom Controls) --- */
 .controls { 
     display: flex; 
     justify-content: center; 
@@ -487,9 +537,8 @@ p.subtitle {
     transition: all 0.3s ease; 
 }
 
-/* Base style for secondary button (e.g., Back to Menu) */
 .action-btn:not(.primary) {
-    background: linear-gradient(135deg, #d6caba, #bbaea0); /* Sandstone/bronze */
+    background: linear-gradient(135deg, #d6caba, #bbaea0);
     border: 2px solid #8b7355; 
     box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.5);
     color: #3d2e1f;
@@ -502,9 +551,8 @@ p.subtitle {
     box-shadow: inset 0 2px 4px rgba(255,255,255,0.5), 0 4px 8px rgba(0,0,0,0.6);
 }
 
-/* Base style for primary button (e.g., Next Battle / Restart Round) */
 .action-btn.primary {
-    background: linear-gradient(135deg, #f3c93f, #d4af37); /* Gold */
+    background: linear-gradient(135deg, #f3c93f, #d4af37);
     border: 2px solid #5e4c3a; 
     box-shadow: inset 0 2px 4px rgba(255,255,255,0.5), 0 2px 4px rgba(0,0,0,0.5), 0 0 10px rgba(212, 175, 55, 0.4);
     color: #1a1510;
@@ -517,16 +565,16 @@ p.subtitle {
     box-shadow: inset 0 2px 4px rgba(255,255,255,0.6), 0 4px 8px rgba(0,0,0,0.6), 0 0 20px rgba(212, 175, 55, 0.7);
 }
 
-/* Responsiveness */
 @media (max-width: 900px) {
     .game-layout { flex-direction: column; gap: 20px; }
     .player-area { width: 100%; }
     .player-panel { flex-direction: row; justify-content: space-around; padding: 10px; }
     .player-role-label { display: none; }
     .pieces-pool { width: 90%; justify-content: center; }
-    .avatar { width: 50px; height: 50px; margin: 0; }
+    .avatar { width: 80px; height: 80px; margin: 0; }
     .player-name { margin: 0; font-size: 1.2rem; }
     .board-container { width: 320px; height: 320px; border-width: 8px;}
     #menu-screen { padding: 30px 20px; width: 90%; min-width: unset; }
-    #name-input-section { max-width: 100%; }
+    .mk-selection-container { flex-direction: column; }
+    .roster-grid { order: -1; margin-bottom: 20px; }
 }
