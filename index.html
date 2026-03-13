@@ -150,58 +150,101 @@
             letter-spacing: 1px;
         }
 
-        /* --- MARMUROWA PLANSZA --- */
+        /* --- PŁYTA MARMUROWA (Plansza) --- */
         .board-container {
             width: 480px; height: 480px; 
             background: #e8e5df;
+            /* Wspaniały efekt marmuru: połączenie zakodowanego SVG z szumem i gradientów */
             background-image: 
-                linear-gradient(to bottom right, transparent 40%, rgba(0,0,0,0.06) 45%, rgba(0,0,0,0.02) 50%, transparent 55%),
-                linear-gradient(to top right, transparent 30%, rgba(212, 175, 55, 0.05) 35%, transparent 40%),
-                radial-gradient(circle at 20% 80%, rgba(0,0,0,0.05) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(255,255,255,0.8) 0%, transparent 50%);
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.015' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.06'/%3E%3C/svg%3E"),
+                linear-gradient(to bottom right, transparent 40%, rgba(0,0,0,0.1) 43%, rgba(0,0,0,0.03) 47%, transparent 52%),
+                linear-gradient(to top right, transparent 30%, rgba(212, 175, 55, 0.08) 33%, transparent 40%),
+                radial-gradient(circle at 20% 80%, rgba(0,0,0,0.05) 0%, transparent 60%),
+                radial-gradient(circle at 80% 20%, rgba(255,255,255,0.9) 0%, transparent 60%);
             border: 18px solid #3d2e1f;
             box-shadow: 
                 0 30px 60px rgba(0,0,0,0.9), 
-                inset 0 0 30px rgba(0,0,0,0.4),
+                inset 0 0 40px rgba(0,0,0,0.5),
                 inset 0 0 5px rgba(255,255,255,0.9),
-                0 0 0 5px #d4af37; /* Złota rama na zewnątrz drewna/kamienia */
+                0 0 0 5px #d4af37; /* Złota rama */
             position: relative; padding: 30px; border-radius: 4px;
         }
 
         #board { position: relative; width: 100%; height: 100%; }
 
-        /* Złote Inkrustacje */
+        /* Złote Inkrustacje linii */
         .svg-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; filter: drop-shadow(1px 2px 3px rgba(0, 0, 0, 0.7)); }
         .svg-lines line, .svg-lines circle { stroke: #d4af37; stroke-width: 3; fill: none; }
 
-        .node { position: absolute; width: 50px; height: 50px; transform: translate(-50%, -50%); border-radius: 50%; cursor: pointer; z-index: 5; transition: background 0.2s, box-shadow 0.2s; }
-        .node:hover { background: radial-gradient(circle, rgba(212, 175, 55, 0.4) 0%, transparent 60%); }
-        .node.can-move-to { box-shadow: 0 0 20px 8px rgba(212, 175, 55, 0.9); border: 2px solid #fff; background: rgba(212, 175, 55, 0.3); animation: pulse-node 1.5s infinite; }
-        @keyframes pulse-node { 0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; } 50% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; } }
+        /* WIDOCZNE WYŻŁOBIENIA (Gniazda na pionki) */
+        .node { 
+            position: absolute; width: 50px; height: 50px; 
+            transform: translate(-50%, -50%); border-radius: 50%; 
+            cursor: pointer; z-index: 5; transition: all 0.3s ease; 
+            /* Styl wyżłobienia w kamieniu */
+            background: rgba(0, 0, 0, 0.08);
+            border: 2px solid rgba(212, 175, 55, 0.4);
+            box-shadow: inset 0 3px 8px rgba(0,0,0,0.4), 0 1px 2px rgba(255,255,255,0.6);
+        }
+        .node:hover { background: rgba(212, 175, 55, 0.3); border-color: rgba(212, 175, 55, 0.8); }
+        
+        /* Podświetlenie wolnych miejsc w FAZIE USTAWIANIA */
+        .node.can-place {
+            animation: pulse-place 2s infinite;
+            border-color: rgba(212, 175, 55, 0.8);
+            background: rgba(212, 175, 55, 0.15);
+        }
+        @keyframes pulse-place {
+            0% { box-shadow: inset 0 3px 6px rgba(0,0,0,0.3), 0 0 5px rgba(212, 175, 55, 0.5); }
+            50% { box-shadow: inset 0 3px 6px rgba(0,0,0,0.3), 0 0 15px 5px rgba(212, 175, 55, 0.9); }
+            100% { box-shadow: inset 0 3px 6px rgba(0,0,0,0.3), 0 0 5px rgba(212, 175, 55, 0.5); }
+        }
 
-        /* PIONKI (Alabaster i Onyks) */
+        /* Podświetlenie miejsc, w które MOŻNA PRZESUNĄĆ pionek */
+        .node.can-move-to { 
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 0 25px 10px rgba(212, 175, 55, 0.9); 
+            border: 3px solid #fff; background: rgba(212, 175, 55, 0.4); 
+            animation: pulse-target 1.5s infinite; 
+        }
+        @keyframes pulse-target { 
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; } 
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } 
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; } 
+        }
+
+        /* PIONKI (Kamienne kule) */
         .piece, .pool-piece { 
-            position: absolute; width: 40px; height: 40px; border-radius: 50%; 
+            position: absolute; width: 42px; height: 42px; border-radius: 50%; 
             transform: translate(-50%, -50%); z-index: 10; pointer-events: none; 
             transition: top 0.4s ease-in-out, left 0.4s ease-in-out, transform 0.2s, box-shadow 0.2s; 
         }
-        .pool-piece { position: relative; transform: none; }
+        .pool-piece { position: relative; transform: none; width: 34px; height: 34px;}
         
-        /* Alabaster */
+        /* Jasny Kamień */
         .piece.player1, .pool-piece.white { 
             background: radial-gradient(circle at 30% 30%, #ffffff, #e8e5df 40%, #a39b8d);
             box-shadow: 3px 8px 15px rgba(0,0,0,0.7), inset -3px -3px 10px rgba(0,0,0,0.4), inset 3px 3px 10px rgba(255,255,255,1);
         }
-        /* Onyks */
+        /* Ciemny Kamień */
         .piece.player2, .pool-piece.black { 
             background: radial-gradient(circle at 30% 30%, #555, #1a1a1a 50%, #000);
             box-shadow: 3px 8px 15px rgba(0,0,0,0.8), inset -3px -3px 10px rgba(0,0,0,0.9), inset 3px 3px 8px rgba(255,255,255,0.4);
         }
         
-        .piece.selected { transform: translate(-50%, -50%) scale(1.15); box-shadow: 0 0 20px 8px rgba(212, 175, 55, 0.8), 3px 8px 15px rgba(0,0,0,0.7), inset -4px -4px 10px rgba(0,0,0,0.4), inset 4px 4px 10px rgba(255,255,255,1); z-index: 15;}
-        .piece.can-move { animation: pulse-piece 2s infinite ease-in-out; cursor: pointer; pointer-events: auto; }
+        .piece.selected { 
+            transform: translate(-50%, -50%) scale(1.15); 
+            box-shadow: 0 0 25px 10px rgba(212, 175, 55, 0.9), 3px 8px 15px rgba(0,0,0,0.7), inset -4px -4px 10px rgba(0,0,0,0.4), inset 4px 4px 10px rgba(255,255,255,1); 
+            z-index: 15;
+        }
 
-        @keyframes pulse-piece { 0% { box-shadow: 0 0 10px 0px rgba(212, 175, 55, 0.5), 3px 8px 15px rgba(0,0,0,0.7); } 50% { box-shadow: 0 0 20px 8px rgba(212, 175, 55, 0.9), 3px 8px 15px rgba(0,0,0,0.7); transform: translate(-50%, -50%) scale(1.05); } 100% { box-shadow: 0 0 10px 0px rgba(212, 175, 55, 0.5), 3px 8px 15px rgba(0,0,0,0.7); } }
+        /* Podświetlenie PIONKÓW, którymi można się ruszyć */
+        .piece.can-move { animation: pulse-piece 2s infinite ease-in-out; cursor: pointer; pointer-events: auto; }
+        @keyframes pulse-piece { 
+            0% { box-shadow: 0 0 10px 2px rgba(212, 175, 55, 0.5), 3px 8px 15px rgba(0,0,0,0.7); } 
+            50% { box-shadow: 0 0 20px 8px rgba(212, 175, 55, 0.9), 3px 8px 15px rgba(0,0,0,0.7); transform: translate(-50%, -50%) scale(1.05); } 
+            100% { box-shadow: 0 0 10px 2px rgba(212, 175, 55, 0.5), 3px 8px 15px rgba(0,0,0,0.7); } 
+        }
+
         .piece.winner { animation: winner-pulse 1s infinite alternate ease-in-out; box-shadow: 0 0 35px 15px rgba(212, 175, 55, 1), 3px 8px 15px rgba(0,0,0,0.7); z-index: 20; border: 2px solid #fff;}
         @keyframes winner-pulse { from { transform: translate(-50%, -50%) scale(1.1); } to { transform: translate(-50%, -50%) scale(1.3); } }
 
@@ -254,7 +297,7 @@
                 <div class="player-panel active" id="panel-player1">
                     <div class="player-role-label" id="role-label-1">Ty</div>
                     <div class="avatar white-avatar"></div>
-                    <div class="player-name">Alabaster</div>
+                    <div class="player-name">Biały</div>
                     <div class="score-box">Wiktorie: <br><span class="score-number" id="score1">0</span></div>
                 </div>
                 <div class="pieces-pool" id="pool1">
@@ -281,9 +324,9 @@
 
             <div class="player-area">
                 <div class="player-panel" id="panel-player2">
-                    <div class="player-role-label" id="role-label-2">Przeciwnik</div>
+                    <div class="player-role-label" id="role-label-2">AI</div>
                     <div class="avatar black-avatar"></div>
-                    <div class="player-name">Onyks</div>
+                    <div class="player-name">Czarny</div>
                     <div class="score-box">Wiktorie: <br><span class="score-number" id="score2">0</span></div>
                 </div>
                 <div class="pieces-pool" id="pool2">
@@ -308,8 +351,8 @@
             document.getElementById('menu-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'flex';
             
-            document.getElementById('role-label-1').innerText = gameMode === 'pvp' ? "Gracz 1" : "Obywatel";
-            document.getElementById('role-label-2').innerText = gameMode === 'pvp' ? "Gracz 2" : "Cezar (AI)";
+            document.getElementById('role-label-1').innerText = gameMode === 'pvp' ? "Pierwszy Gracz" : "Ty";
+            document.getElementById('role-label-2').innerText = gameMode === 'pvp' ? "Drugi Gracz" : "AI";
 
             scores = {1: 0, 2: 0}; updateScores(); resetBoard();
         }
@@ -350,7 +393,7 @@
 
         function getPlayerName(playerNum) {
             if (gameMode === 'ai') return playerNum === 1 ? 'Twój' : 'AI';
-            return playerNum === 1 ? 'Alabaster' : 'Onyks';
+            return playerNum === 1 ? 'Pierwszego Gracza' : 'Drugiego Gracza';
         }
 
         function updateUI() {
@@ -364,15 +407,34 @@
 
             clearBoardHighlights();
 
-            if (gameActive && phase === 'movement') {
-                if (selectedPieceNode === null) highlightMovablePieces();
-                else highlightTargetNodes();
+            if (gameActive) {
+                if (phase === 'placement') {
+                    highlightPlacementNodes();
+                } else if (phase === 'movement') {
+                    if (selectedPieceNode === null) highlightMovablePieces();
+                    else highlightTargetNodes();
+                }
             }
         }
 
         function clearBoardHighlights() {
             pieceElements.forEach(p => p.el.classList.remove('can-move'));
-            document.querySelectorAll('.node').forEach(n => n.classList.remove('can-move-to'));
+            document.querySelectorAll('.node').forEach(n => {
+                n.classList.remove('can-move-to');
+                n.classList.remove('can-place');
+            });
+        }
+
+        // Nowa funkcja: podświetla puste otwory w fazie ustawiania
+        function highlightPlacementNodes() {
+            if (currentPlayer === 1 || gameMode === 'pvp') {
+                const nodes = document.querySelectorAll('.node');
+                nodes.forEach((n, idx) => {
+                    if (board[idx] === null) {
+                        n.classList.add('can-place');
+                    }
+                });
+            }
         }
 
         function highlightMovablePieces() {
@@ -411,7 +473,7 @@
 
                 if (wCount === 3 && bCount === 3) {
                     phase = 'movement'; currentPlayer = 2; 
-                    statusEl.innerText = gameMode === 'ai' ? "Faza Ruchu: Zaczyna Cezar (AI)" : "Faza Ruchu: Wybiera Onyks";
+                    statusEl.innerText = gameMode === 'ai' ? "Faza Ruchu: Zaczyna AI" : "Faza Ruchu: Wybiera Czarny";
                     updateUI();
                     if (gameMode === 'ai') setTimeout(makeAiMove, 800);
                 } else {
@@ -421,7 +483,7 @@
             } else if (phase === 'movement') {
                 if (board[i] === currentPlayer) {
                     selectedPieceNode = i; highlightSelectedPiece(i);
-                    statusEl.innerText = currentPlayer === 1 ? "Wskaż punkt docelowy" : "Cezar analizuje ruch...";
+                    statusEl.innerText = currentPlayer === 1 ? "Wskaż punkt docelowy" : "AI analizuje ruch...";
                     updateUI();
                 } else if (board[i] === null && selectedPieceNode !== null) {
                     if (ADJACENCY[selectedPieceNode].includes(i)) {
@@ -432,7 +494,7 @@
                     }
                 } else if (selectedPieceNode !== null && !isAiMove) {
                     selectedPieceNode = null; clearHighlightsOfSelection();
-                    statusEl.innerText = currentPlayer === 1 ? "Wybierz swój pionek" : "Tura Cezara...";
+                    statusEl.innerText = currentPlayer === 1 ? "Wybierz swój pionek" : "Tura AI...";
                     updateUI();
                 }
             }
@@ -443,11 +505,11 @@
             
             let phaseText = phase === 'placement' ? "Ustawianie" : "Faza Ruchu";
             if (gameMode === 'ai') {
-                statusEl.innerText = currentPlayer === 1 ? `${phaseText}: Twój ruch` : `${phaseText}: Tura Cezara...`;
+                statusEl.innerText = currentPlayer === 1 ? `${phaseText}: Twój ruch` : `${phaseText}: Tura AI...`;
                 updateUI();
                 if (currentPlayer === 2) setTimeout(makeAiMove, 800);
             } else {
-                statusEl.innerText = `${phaseText}: Tura - ${getPlayerName(currentPlayer)}`;
+                statusEl.innerText = `${phaseText}: Ruch - ${getPlayerName(currentPlayer)}`;
                 updateUI();
             }
         }
@@ -500,7 +562,12 @@
                 });
             }
             
-            let winText = gameMode === 'ai' ? (winner === 1 ? "🎉 CHWAŁA! ZWYCIĘŻASZ!" : "☠️ CEZAR TRIUMFUJE!") : `🎉 WIKTORIA: ${getPlayerName(winner)}!`;
+            let winText = "";
+            if (gameMode === 'ai') {
+                winText = winner === 1 ? "🎉 CHWAŁA! ZWYCIĘŻASZ!" : "☠️ AI TRIUMFUJE!";
+            } else {
+                winText = winner === 1 ? "🎉 WIKTORIA: Pierwszy Gracz!" : "🎉 WIKTORIA: Drugi Gracz!";
+            }
             statusEl.innerText = winText;
             
             const rBtn = document.getElementById('resetBtn');
