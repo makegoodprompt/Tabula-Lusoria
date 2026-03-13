@@ -11,7 +11,7 @@
     <h1>Tabula Lusoria</h1>
     <p class="subtitle">Ancient Game of the Legions</p>
 
-    <div id="menu-screen">
+    <div id="menu-screen" class="screen active">
         <h2 class="menu-title">Choose Your Champion</h2>
         
         <div class="mk-selection-container">
@@ -22,7 +22,7 @@
                     <button class="toggle-btn" data-player="1" data-type="ai">AI</button>
                 </div>
                 <div class="portrait-container p1-portrait-container active-selector" id="p1-selector-box">
-                    <img src="https://placehold.co/150x150/2a1f18/d4af37?text=?" class="large-portrait" id="p1-menu-portrait" alt="Player 1">
+                    <img src="img/characters/unknown.jpg" class="large-portrait" id="p1-menu-portrait" alt="Player 1">
                 </div>
                 <h3 class="champion-name" id="p1-menu-name">Select Player 1</h3>
             </div>
@@ -35,7 +35,7 @@
                     <button class="toggle-btn" data-player="2" data-type="ai">AI</button>
                 </div>
                 <div class="portrait-container p2-portrait-container" id="p2-selector-box">
-                    <img src="https://placehold.co/150x150/2a1f18/d4af37?text=?" class="large-portrait mirror-img" id="p2-menu-portrait" alt="Player 2">
+                    <img src="img/characters/unknown.jpg" class="large-portrait mirror-img" id="p2-menu-portrait" alt="Player 2">
                 </div>
                 <h3 class="champion-name" id="p2-menu-name">Select Player 2</h3>
             </div>
@@ -45,13 +45,13 @@
         <button class="start-btn" id="start-game-btn" disabled>Enter the Arena</button>
     </div>
 
-    <div id="game-screen">
+    <div id="game-screen" class="screen">
         <div class="game-layout">
             
             <div class="player-area">
                 <div class="player-panel active" id="panel-player1">
                     <div class="player-role-label" id="role-label-1">Human</div>
-                    <img src="" class="avatar p1-avatar" id="game-p1-avatar" alt="P1">
+                    <img src="" class="game-avatar p1-avatar" id="game-p1-avatar" alt="P1">
                     <div class="player-name" id="player1-name-display">P1 Name</div>
                     <div class="score-box">Victories: <br><span class="score-number" id="score1">0</span></div>
                 </div>
@@ -64,12 +64,7 @@
                 <div id="status">Placement Phase: Your Turn</div>
                 <div class="board-container">
                     <div id="board">
-                        <svg class="svg-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
-                            <circle cx="50" cy="50" r="40" />
-                            <line x1="50" y1="10" x2="50" y2="90" /><line x1="10" y1="50" x2="90" y2="50" />
-                            <line x1="21.72" y1="21.72" x2="78.28" y2="78.28" /><line x1="21.72" y1="78.28" x2="78.28" y2="21.72" />
-                        </svg>
-                    </div>
+                        </div>
                 </div>
                 <div class="controls">
                     <button class="action-btn" id="btn-menu">Back to Menu</button>
@@ -80,7 +75,7 @@
             <div class="player-area">
                 <div class="player-panel" id="panel-player2">
                     <div class="player-role-label" id="role-label-2">AI</div>
-                    <img src="" class="avatar p2-avatar mirror-img" id="game-p2-avatar" alt="P2">
+                    <img src="" class="game-avatar p2-avatar mirror-img" id="game-p2-avatar" alt="P2">
                     <div class="player-name" id="player2-name-display">P2 Name</div>
                     <div class="score-box">Victories: <br><span class="score-number" id="score2">0</span></div>
                 </div>
