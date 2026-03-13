@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabula Lusoria - Antyczny Rzym</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap');
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: #111;
+            background-image: radial-gradient(circle at 50% 50%, #2a2824 0%, #0d0c0a 100%);
+            color: #f4ece1;
+            font-family: 'Cinzel', serif, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        h1 {
+            font-size: 3rem;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.9), 0 0 20px rgba(212, 175, 55, 0.3);
+            letter-spacing: 4px;
+            color: #d4af37;
+            text-align: center;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        p.subtitle { margin-top: 0; margin-bottom: 30px; font-size: 1.2rem; color: #c4bcae; text-align: center; letter-spacing: 2px; }
+
+        /* --- EKRAN MENU GŁÓWNEGO --- */
+        #menu-screen {
+            display: flex; flex-direction: column; align-items: center;
+            background: linear-gradient(135deg, #e5e4e2, #b5b5b5);
+            padding: 40px 60px; border-radius: 15px; border: 4px solid #3a3a3a;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.9), inset 0 0 20px rgba(0,0,0,0.3), 0 0 15px rgba(212, 175, 55, 0.4);
+            color: #111; position: relative; min-width: 400px;
+        }
+
+        #menu-screen::before, #menu-screen::after { content: ''; position: absolute; width: 30px; height: 30px; border: 2px solid #d4af37; }
+        #menu-screen::before { top: 15px; left: 15px; border-right: none; border-bottom: none; }
+        #menu-screen::after { bottom: 15px; right: 15px; border-left: none; border-top: none; }
+
+        .menu-section { margin-bottom: 30px; width: 100%; text-align: center; }
+        .menu-section h2 { font-size: 1.4rem; margin-bottom: 15px; color: #222; border-bottom: 1px solid #777; padding-bottom: 5px; text-transform: uppercase; }
+
+        .toggle-group { display: flex; justify-content: center; gap: 15px; }
+
+        .toggle-btn {
+            background: #2c2c2c; color: #e5e4e2; border: 2px solid #555;
+            padding: 10px 20px; font-family: 'Cinzel', serif; font-size: 1rem;
+            cursor: pointer; border-radius: 5px; transition: all 0.3s; min-width: 160px;
+        }
+        .toggle-btn:hover { background: #444; }
+        .toggle-btn.active {
+            background: #d4af37; color: #111; border-color: #f3c93f;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.6); font-weight: bold;
+        }
+
+        .start-btn {
+            font-size: 1.5rem; padding: 15px 40px; margin-top: 10px;
+            background: linear-gradient(to bottom, #f3c93f, #d4af37, #997a00);
+            color: #111; border: 2px solid #fff; border-radius: 8px; cursor: pointer;
+            font-family: 'Cinzel', serif; font-weight: bold; text-transform: uppercase;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.6); transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .start-btn:hover { transform: scale(1.05); box-shadow: 0 8px 20px rgba(212, 175, 55, 0.6); }
+
+        /* --- EKRAN GRY --- */
+        #game-screen { display: none; flex-direction: column; align-items: center; width: 100%; }
+        .game-layout { display: flex; align-items: center; justify-content: center; gap: 40px; width: 100%; max-width: 1200px; padding: 0 20px; }
+
+        .player-area { display: flex; flex-direction: column; align-items: center; gap: 15px; min-width: 220px; }
+        .player-panel {
+            display: flex; flex-direction: column; align-items: center; padding: 20px 30px;
+            border-radius: 15px; width: 100%; border: 2px solid transparent;
+            transition: all 0.4s ease; opacity: 0.6; transform: scale(0.95); position: relative;
+        }
+        .player-panel.active { opacity: 1; transform: scale(1.05); border-color: #d4af37; box-shadow: 0 0 25px rgba(212, 175, 55, 0.4), inset 0 0 15px rgba(0,0,0,0.5); }
+
+        #panel-player1 { background: linear-gradient(135deg, #e5e4e2, #b5b5b5); color: #111; }
+        #panel-player2 { background: linear-gradient(135deg, #2c3e32, #111); color: #f4ece1; }
+
+        .player-role-label { position: absolute; top: 10px; font-size: 0.7rem; letter-spacing: 1px; opacity: 0.7; }
+        .player-name { font-size: 1.5rem; font-weight: bold; margin: 15px 0 5px 0; text-transform: uppercase; }
+        .score-box { font-size: 1.2rem; font-weight: bold; }
+        .score-number { font-size: 1.8rem; color: #d4af37; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
+
+        .avatar { width: 80px; height: 80px; border-radius: 50%; margin-bottom: 10px; margin-top: 15px; }
+        .avatar.white-avatar { background: radial-gradient(circle at 30% 30%, #ffffff, #d8d8d8 50%, #999999); box-shadow: 2px 6px 10px rgba(0,0,0,0.5), inset -4px -4px 10px rgba(0,0,0,0.3), inset 4px 4px 10px rgba(255,255,255,1); }
+        .avatar.black-avatar { background: radial-gradient(circle at 30% 30%, #4a5c50, #1c2620 50%, #000000); box-shadow: 2px 6px 10px rgba(0,0,0,0.6), inset -4px -4px 10px rgba(0,0,0,0.6), inset 4px 4px 10px rgba(255,255,255,0.4); }
+
+        .pieces-pool { display: flex; justify-content: center; gap: 10px; padding: 10px; background: rgba(0,0,0,0.5); border-radius: 10px; border: 1px solid #d4af37; min-height: 40px; transition: opacity 0.5s ease; }
+        .pieces-pool.hidden { opacity: 0; pointer-events: none; }
+        .pool-piece { width: 30px; height: 30px; border-radius: 50%; transition: opacity 0.3s ease, transform 0.3s ease; }
+        .pool-piece.placed { opacity: 0; transform: scale(0.1) translateY(20px); }
+        .pool-piece.white { background: radial-gradient(circle at 30% 30%, #ffffff, #d8d8d8 50%, #999999); box-shadow: 1px 3px 5px rgba(0,0,0,0.5), inset -2px -2px 5px rgba(0,0,0,0.3), inset 2px 2px 5px rgba(255,255,255,1); }
+        .pool-piece.black { background: radial-gradient(circle at 30% 30%, #4a5c50, #1c2620 50%, #000000); box-shadow: 1px 3px 5px rgba(0,0,0,0.6), inset -2px -2px 5px rgba(0,0,0,0.6), inset 2px 2px 5px rgba(255,255,255,0.4); }
+
+        .center-column { display: flex; flex-direction: column; align-items: center; }
+
+        #status { font-size: 1.2rem; margin-bottom: 15px; padding: 10px 20px; background: rgba(0,0,0,0.7); border: 1px solid #d4af37; border-radius: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); text-align: center; min-height: 28px; color: #d4af37; }
+
+        .board-container {
+            width: 450px; height: 450px; background-color: #e5e4e2;
+            background-image: radial-gradient(circle at 20% 30%, rgba(255,255,255,0.6) 0%, transparent 40%), radial-gradient(circle at 80% 80%, rgba(0,0,0,0.05) 0%, transparent 50%), linear-gradient(45deg, transparent 48%, rgba(0,0,0,0.06) 49%, rgba(0,0,0,0.03) 51%, transparent 52%), linear-gradient(-45deg, transparent 40%, rgba(255,255,255,0.8) 45%, rgba(255,255,255,0.4) 50%, transparent 60%);
+            border: 12px solid #2a2a2a; border-radius: 10px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.9), inset 0 0 30px rgba(0,0,0,0.4), inset 0 0 5px rgba(255,255,255,0.8);
+            position: relative; padding: 25px;
+        }
+
+        #board { position: relative; width: 100%; height: 100%; }
+
+        .svg-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; filter: drop-shadow(1px 1px 0px rgba(255, 255, 255, 0.7)); }
+        .svg-lines line, .svg-lines circle { stroke: #6b5335; stroke-width: 2; fill: none; }
+
+        .node { position: absolute; width: 44px; height: 44px; transform: translate(-50%, -50%); border-radius: 50%; cursor: pointer; z-index: 5; transition: background 0.2s, box-shadow 0.2s; }
+        .node:hover { background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, transparent 70%); }
+        .node.can-move-to { box-shadow: 0 0 15px 5px rgba(212, 175, 55, 0.9); border: 2px solid #d4af37; background: rgba(212, 175, 55, 0.2); animation: pulse-node 1.5s infinite; }
+        @keyframes pulse-node { 0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; } 50% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; } }
+
+        .piece { position: absolute; width: 36px; height: 36px; border-radius: 50%; transform: translate(-50%, -50%); z-index: 10; pointer-events: none; transition: top 0.4s ease-in-out, left 0.4s ease-in-out, transform 0.2s, box-shadow 0.2s; }
+        .piece.player1 { background: radial-gradient(circle at 30% 30%, #ffffff, #d8d8d8 50%, #999999); box-shadow: 2px 6px 10px rgba(0,0,0,0.5), inset -4px -4px 10px rgba(0,0,0,0.3), inset 4px 4px 10px rgba(255,255,255,1); }
+        .piece.player2 { background: radial-gradient(circle at 30% 30%, #4a5c50, #1c2620 50%, #000000); box-shadow: 2px 6px 10px rgba(0,0,0,0.6), inset -4px -4px 10px rgba(0,0,0,0.6), inset 4px 4px 10px rgba(255,255,255,0.4); }
+        .piece.selected { transform: translate(-50%, -50%) scale(1.15); box-shadow: 0 0 15px 5px rgba(212, 175, 55, 0.7), 2px 6px 10px rgba(0,0,0,0.5), inset -4px -4px 10px rgba(0,0,0,0.3), inset 4px 4px 10px rgba(255,255,255,1); z-index: 15;}
+        .piece.can-move { animation: pulse-piece 2s infinite ease-in-out; cursor: pointer; pointer-events: auto; }
+
+        @keyframes pulse-piece { 0% { box-shadow: 0 0 10px 0px rgba(212, 175, 55, 0.5), 2px 6px 10px rgba(0,0,0,0.5); } 50% { box-shadow: 0 0 15px 5px rgba(212, 175, 55, 0.8), 2px 6px 10px rgba(0,0,0,0.5); transform: translate(-50%, -50%) scale(1.03); } 100% { box-shadow: 0 0 10px 0px rgba(212, 175, 55, 0.5), 2px 6px 10px rgba(0,0,0,0.5); } }
+        .piece.winner { animation: winner-pulse 1s infinite alternate ease-in-out; box-shadow: 0 0 25px 10px rgba(212, 175, 55, 1), 2px 6px 10px rgba(0,0,0,0.5); z-index: 20; }
+        @keyframes winner-pulse { from { transform: translate(-50%, -50%) scale(1.1); } to { transform: translate(-50%, -50%) scale(1.3); } }
+
+        .controls { display: flex; gap: 15px; margin-top: 30px; margin-bottom: 20px; }
+        button.action-btn { padding: 10px 20px; font-family: 'Cinzel', serif; font-size: 1rem; background: #2c2c2c; color: #d4af37; border: 1px solid #d4af37; border-radius: 5px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
+        button.action-btn:hover { background: #d4af37; color: #111; }
+        button.action-btn.primary { background: #d4af37; color: #111; font-weight: bold; }
+        button.action-btn.primary:hover { background: #f3c93f; transform: translateY(-2px); }
+
+        @media (max-width: 900px) {
+            .game-layout { flex-direction: column; gap: 20px; }
+            .player-area { width: 100%; }
+            .player-panel { flex-direction: row; justify-content: space-around; padding: 10px; }
+            .player-role-label { display: none; }
+            .pieces-pool { width: 90%; justify-content: center; }
+            .avatar { width: 50px; height: 50px; margin: 0; }
+            .player-name { margin: 0; font-size: 1.2rem; }
+            .board-container { width: 320px; height: 320px; padding: 15px; border-width: 8px;}
+            #menu-screen { padding: 30px 20px; width: 90%; min-width: unset; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Tabula Lusoria</h1>
+    <p class="subtitle">Antyczna gra rzymskich legionistów</p>
+
+    <div id="menu-screen">
+        <div class="menu-section">
+            <h2>Przeciwnik</h2>
+            <div class="toggle-group">
+                <button class="toggle-btn active" id="btn-pvp" onclick="setMode('pvp')">Drugi Gracz</button>
+                <button class="toggle-btn" id="btn-ai" onclick="setMode('ai')">Gra z AI</button>
+            </div>
+        </div>
+        <button class="start-btn" onclick="startGame()">Wejdź na Arenę</button>
+    </div>
+
+    <div id="game-screen">
+        <div class="game-layout">
+            
+            <div class="player-area">
+                <div class="player-panel active" id="panel-player1">
+                    <div class="player-role-label" id="role-label-1">Ty</div>
+                    <div class="avatar white-avatar"></div>
+                    <div class="player-name">Biały</div>
+                    <div class="score-box">Zwycięstwa: <span class="score-number" id="score1">0</span></div>
+                </div>
+                <div class="pieces-pool" id="pool1">
+                    <div class="pool-piece white"></div><div class="pool-piece white"></div><div class="pool-piece white"></div>
+                </div>
+            </div>
+
+            <div class="center-column">
+                <div id="status">Faza Ustawiania: Twój Ruch</div>
+                <div class="board-container">
+                    <div id="board">
+                        <svg class="svg-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
+                            <circle cx="50" cy="50" r="40" />
+                            <line x1="50" y1="10" x2="50" y2="90" /><line x1="10" y1="50" x2="90" y2="50" />
+                            <line x1="21.72" y1="21.72" x2="78.28" y2="78.28" /><line x1="21.72" y1="78.28" x2="78.28" y2="21.72" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="controls">
+                    <button class="action-btn" onclick="goToMenu()">Wróć do Menu</button>
+                    <button class="action-btn primary" onclick="resetBoard()" id="resetBtn">Restart Rundy</button>
+                </div>
+            </div>
+
+            <div class="player-area">
+                <div class="player-panel" id="panel-player2">
+                    <div class="player-role-label" id="role-label-2">Przeciwnik</div>
+                    <div class="avatar black-avatar"></div>
+                    <div class="player-name">Czarny</div>
+                    <div class="score-box">Zwycięstwa: <span class="score-number" id="score2">0</span></div>
+                </div>
+                <div class="pieces-pool" id="pool2">
+                    <div class="pool-piece black"></div><div class="pool-piece black"></div><div class="pool-piece black"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let gameMode = 'pvp'; // 'pvp' lub 'ai'
+
+        function setMode(mode) {
+            gameMode = mode;
+            document.getElementById('btn-pvp').classList.remove('active');
+            document.getElementById('btn-ai').classList.remove('active');
+            document.getElementById(mode === 'pvp' ? 'btn-pvp' : 'btn-ai').classList.add('active');
+        }
+
+        function startGame() {
+            document.getElementById('menu-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
+            
+            document.getElementById('role-label-1').innerText = gameMode === 'pvp' ? "Gracz 1" : "Ty";
+            document.getElementById('role-label-2').innerText = gameMode === 'pvp' ? "Gracz 2" : "Sztuczna Inteligencja";
+
+            scores = {1: 0, 2: 0}; updateScores(); resetBoard();
+        }
+
+        function goToMenu() {
+            document.getElementById('menu-screen').style.display = 'flex';
+            document.getElementById('game-screen').style.display = 'none';
+        }
+
+        // LOGIKA GRY
+        const POSITIONS = { 0:{x:50,y:50}, 1:{x:50,y:10}, 2:{x:78.28,y:21.72}, 3:{x:90,y:50}, 4:{x:78.28,y:78.28}, 5:{x:50,y:90}, 6:{x:21.72,y:78.28}, 7:{x:10,y:50}, 8:{x:21.72,y:21.72} };
+        const ADJACENCY = { 0:[1,2,3,4,5,6,7,8], 1:[0,8,2], 2:[0,1,3], 3:[0,2,4], 4:[0,3,5], 5:[0,4,6], 6:[0,5,7], 7:[0,6,8], 8:[0,7,1] };
+        const WINNING_COMBINATIONS = [ [1,0,5], [2,0,6], [3,0,7], [4,0,8], [1,2,3], [2,3,4], [3,4,5], [4,5,6], [5,6,7], [6,7,8], [7,8,1], [8,1,2] ];
+
+        let phase = 'placement'; 
+        let currentPlayer = 1; // 1 = Ty/Biały, 2 = AI/Czarny
+        let board = Array(9).fill(null);
+        let scores = {1: 0, 2: 0};
+        let selectedPieceNode = null;
+        let gameActive = true;
+        let pieceElements = []; 
+
+        const boardEl = document.getElementById('board');
+        const statusEl = document.getElementById('status');
+        const panel1 = document.getElementById('panel-player1');
+        const panel2 = document.getElementById('panel-player2');
+
+        function initBoard() {
+            for (let i = 0; i < 9; i++) {
+                let nodeEl = document.createElement('div');
+                nodeEl.className = 'node';
+                nodeEl.style.left = POSITIONS[i].x + '%';
+                nodeEl.style.top = POSITIONS[i].y + '%';
+                nodeEl.addEventListener('click', () => handleNodeClick(i, false));
+                boardEl.appendChild(nodeEl);
+            }
+        }
+
+        function getPlayerName(playerNum) {
+            if (gameMode === 'ai') return playerNum === 1 ? 'Twój' : 'AI';
+            return playerNum === 1 ? 'Biały' : 'Czarny';
+        }
+
+        function updateUI() {
+            if (gameActive) {
+                if (currentPlayer === 1) { panel1.classList.add('active'); panel2.classList.remove('active'); } 
+                else { panel1.classList.remove('active'); panel2.classList.add('active'); }
+            } else { panel1.classList.remove('active'); panel2.classList.remove('active'); }
+
+            if (phase === 'placement') { document.getElementById('pool1').classList.remove('hidden'); document.getElementById('pool2').classList.remove('hidden'); } 
+            else { document.getElementById('pool1').classList.add('hidden'); document.getElementById('pool2').classList.add('hidden'); }
+
+            clearBoardHighlights();
+
+            if (gameActive && phase === 'movement') {
+                if (selectedPieceNode === null) highlightMovablePieces();
+                else highlightTargetNodes();
+            }
+        }
+
+        function clearBoardHighlights() {
+            pieceElements.forEach(p => p.el.classList.remove('can-move'));
+            document.querySelectorAll('.node').forEach(n => n.classList.remove('can-move-to'));
+        }
+
+        function highlightMovablePieces() {
+            pieceElements.forEach(p => {
+                if (p.player === currentPlayer) {
+                    let canMove = ADJACENCY[p.node].some(nodeIdx => board[nodeIdx] === null);
+                    if (canMove && (currentPlayer === 1 || gameMode === 'pvp')) { // Nie podświetlaj pionków AI by je klikać
+                        p.el.classList.add('can-move');
+                        p.el.onclick = () => handleNodeClick(p.node, false);
+                    } else { p.el.onclick = null; }
+                } else { p.el.classList.remove('can-move'); p.el.onclick = null; }
+            });
+        }
+
+        function highlightTargetNodes() {
+            ADJACENCY[selectedPieceNode].forEach(nodeIdx => {
+                if (board[nodeIdx] === null) {
+                    const nodeEl = boardEl.querySelector(`.node[style*="left: ${POSITIONS[nodeIdx].x}%"][style*="top: ${POSITIONS[nodeIdx].y}%"]`);
+                    if (nodeEl) nodeEl.classList.add('can-move-to');
+                }
+            });
+        }
+
+        function handleNodeClick(i, isAiMove) {
+            if (!gameActive) return;
+            // Blokada kliknięć gracza podczas tury AI
+            if (gameMode === 'ai' && currentPlayer === 2 && !isAiMove) return;
+
+            if (phase === 'placement') {
+                if (board[i] !== null) return; 
+                
+                placePiece(i, currentPlayer);
+                if (checkWin(currentPlayer)) { endGame(currentPlayer); return; }
+                
+                const wCount = pieceElements.filter(p => p.player === 1).length;
+                const bCount = pieceElements.filter(p => p.player === 2).length;
+
+                if (wCount === 3 && bCount === 3) {
+                    phase = 'movement'; currentPlayer = 2; 
+                    statusEl.innerText = gameMode === 'ai' ? "Faza Ruchu: Zaczyna AI" : "Faza Ruchu: Wybiera Czarny";
+                    updateUI();
+                    if (gameMode === 'ai') setTimeout(makeAiMove, 800);
+                } else {
+                    switchTurn();
+                }
+
+            } else if (phase === 'movement') {
+                if (board[i] === currentPlayer) {
+                    selectedPieceNode = i; highlightSelectedPiece(i);
+                    statusEl.innerText = currentPlayer === 1 ? "Faza Ruchu: Wskaż pole docelowe" : "Faza Ruchu: AI wybiera pole docelowe...";
+                    updateUI();
+                } else if (board[i] === null && selectedPieceNode !== null) {
+                    if (ADJACENCY[selectedPieceNode].includes(i)) {
+                        movePiece(selectedPieceNode, i);
+                        if (checkWin(currentPlayer)) { endGame(currentPlayer); return; }
+                        
+                        selectedPieceNode = null; clearHighlightsOfSelection(); switchTurn();
+                    }
+                } else if (selectedPieceNode !== null && !isAiMove) {
+                    selectedPieceNode = null; clearHighlightsOfSelection();
+                    statusEl.innerText = currentPlayer === 1 ? "Faza Ruchu: Wybierz swój pionek" : "Faza Ruchu: Tura AI...";
+                    updateUI();
+                }
+            }
+        }
+
+        function switchTurn() { 
+            currentPlayer = currentPlayer === 1 ? 2 : 1; 
+            
+            let phaseText = phase === 'placement' ? "Faza Ustawiania" : "Faza Ruchu";
+            if (gameMode === 'ai') {
+                statusEl.innerText = currentPlayer === 1 ? `${phaseText}: Twój ruch` : `${phaseText}: Tura AI...`;
+                updateUI();
+                if (currentPlayer === 2) setTimeout(makeAiMove, 800);
+            } else {
+                statusEl.innerText = `${phaseText}: Wybiera ${getPlayerName(currentPlayer)}`;
+                updateUI();
+            }
+        }
+
+        function placePiece(nodeIdx, player) {
+            board[nodeIdx] = player;
+            let pieceEl = document.createElement('div');
+            pieceEl.className = `piece player${player}`;
+            pieceEl.style.left = POSITIONS[nodeIdx].x + '%';
+            pieceEl.style.top = POSITIONS[nodeIdx].y + '%';
+            boardEl.appendChild(pieceEl);
+            pieceElements.push({ player: player, node: nodeIdx, el: pieceEl });
+            
+            const poolEl = player === 1 ? document.getElementById('pool1') : document.getElementById('pool2');
+            const pieceInPool = poolEl.querySelector('.pool-piece:not(.placed)');
+            if (pieceInPool) pieceInPool.classList.add('placed');
+        }
+
+        function movePiece(fromIdx, toIdx) {
+            board[fromIdx] = null; board[toIdx] = currentPlayer;
+            let pieceObj = pieceElements.find(p => p.node === fromIdx);
+            if (pieceObj) {
+                pieceObj.node = toIdx;
+                pieceObj.el.style.left = POSITIONS[toIdx].x + '%';
+                pieceObj.el.style.top = POSITIONS[toIdx].y + '%';
+            }
+        }
+
+        function highlightSelectedPiece(idx) {
+            clearHighlightsOfSelection();
+            let pieceObj = pieceElements.find(p => p.node === idx);
+            if (pieceObj) pieceObj.el.classList.add('selected');
+        }
+
+        function clearHighlightsOfSelection() { pieceElements.forEach(p => p.el.classList.remove('selected')); }
+
+        function checkWin(player) {
+            return WINNING_COMBINATIONS.some(combo => {
+                if (combo.every(index => board[index] === player)) return combo;
+            });
+        }
+
+        function endGame(winner) {
+            gameActive = false; scores[winner]++; updateScores(); updateUI();
+            
+            const winningCombo = WINNING_COMBINATIONS.find(combo => combo.every(index => board[index] === winner));
+            if (winningCombo) {
+                pieceElements.forEach(piece => {
+                    if (winningCombo.includes(piece.node) && piece.player === winner) piece.el.classList.add('winner');
+                });
+            }
+            
+            let winText = gameMode === 'ai' ? (winner === 1 ? "🎉 WYGRAŁEŚ!" : "☠️ AI WYGRYWA!") : `🎉 Wygrywa Gracz ${getPlayerName(winner)}!`;
+            statusEl.innerText = winText;
+            
+            const rBtn = document.getElementById('resetBtn');
+            rBtn.innerText = "Zagraj Następną Rundę";
+            rBtn.style.transform = "scale(1.1)";
+            setTimeout(() => rBtn.style.transform = "scale(1)", 200);
+        }
+
+        function updateScores() { document.getElementById('score1').innerText = scores[1]; document.getElementById('score2').innerText = scores[2]; }
+
+        function resetBoard() {
+            board = Array(9).fill(null); phase = 'placement'; currentPlayer = 1; 
+            selectedPieceNode = null; gameActive = true;
+            pieceElements.forEach(p => p.el.remove()); pieceElements = []; clearBoardHighlights();
+            document.querySelectorAll('.pool-piece').forEach(p => p.classList.remove('placed'));
+            
+            statusEl.innerText = "Faza Ustawiania: Twój Ruch";
+            document.getElementById('resetBtn').innerText = "Restart Rundy";
+            updateUI();
+        }
+
+        // --- SZTUCZNA INTELIGENCJA ---
+        function makeAiMove() {
+            if (!gameActive || currentPlayer !== 2) return;
+
+            if (phase === 'placement') {
+                let bestNode = getBestPlacementMove();
+                handleNodeClick(bestNode, true);
+            } else if (phase === 'movement') {
+                let bestMove = getBestMovementMove();
+                if (bestMove) {
+                    // Animacja: najpierw zaznacz pionek, po chwili przesuń
+                    handleNodeClick(bestMove.from, true); 
+                    setTimeout(() => {
+                        if(gameActive) handleNodeClick(bestMove.to, true);
+                    }, 600);
+                }
+            }
+        }
+
+        function getBestPlacementMove() {
+            let emptyNodes = [];
+            for (let i = 0; i < 9; i++) if (board[i] === null) emptyNodes.push(i);
+
+            // 1. Sprawdź, czy AI może wygrać teraz
+            for (let node of emptyNodes) {
+                board[node] = 2;
+                let wins = checkWin(2);
+                board[node] = null;
+                if (wins) return node;
+            }
+
+            // 2. Sprawdź, czy Gracz (1) wygrałby - ZABLOKUJ GO
+            for (let node of emptyNodes) {
+                board[node] = 1;
+                let wins = checkWin(1);
+                board[node] = null;
+                if (wins) return node;
+            }
+
+            // 3. Zajmij środek (0), jeśli wolny
+            if (emptyNodes.includes(0)) return 0;
+
+            // 4. Losowe puste pole
+            return emptyNodes[Math.floor(Math.random() * emptyNodes.length)];
+        }
+
+        function getBestMovementMove() {
+            let validAiMoves = [];
+            let aiPieces = pieceElements.filter(p => p.player === 2);
+            
+            // Znajdź wszystkie legalne ruchy AI
+            aiPieces.forEach(p => {
+                ADJACENCY[p.node].forEach(adjNode => {
+                    if (board[adjNode] === null) validAiMoves.push({ from: p.node, to: adjNode });
+                });
+            });
+
+            if (validAiMoves.length === 0) return null;
+
+            // 1. Sprawdź czy ruch daje natychmiastowe zwycięstwo
+            for (let move of validAiMoves) {
+                board[move.from] = null; board[move.to] = 2;
+                let wins = checkWin(2);
+                board[move.from] = 2; board[move.to] = null; // cofnij
+                if (wins) return move;
+            }
+
+            // 2. Symuluj potencjalne wygrane gracza i ZABLOKUJ je
+            // Znajdź pola na które gracz mógłby się ruszyć by wygrać
+            let playerPieces = pieceElements.filter(p => p.player === 1);
+            let dangerousTargets = [];
+            
+            playerPieces.forEach(p => {
+                ADJACENCY[p.node].forEach(adjNode => {
+                    if (board[adjNode] === null) {
+                        board[p.node] = null; board[adjNode] = 1;
+                        if(checkWin(1)) dangerousTargets.push(adjNode);
+                        board[p.node] = 1; board[adjNode] = null;
+                    }
+                });
+            });
+
+            // Jeśli gracz może wygrać wchodząc na jakieś pole, AI spróbuje tam wejść pierwsze
+            if (dangerousTargets.length > 0) {
+                for (let move of validAiMoves) {
+                    if (dangerousTargets.includes(move.to)) return move;
+                }
+            }
+
+            // 3. Priorytet dla ruchu na środek
+            for (let move of validAiMoves) {
+                if (move.to === 0) return move;
+            }
+
+            // 4. Fallback - wybierz losowy dostępny ruch
+            return validAiMoves[Math.floor(Math.random() * validAiMoves.length)];
+        }
+
+        initBoard();
+
+    </script>
+</body>
+</html>
