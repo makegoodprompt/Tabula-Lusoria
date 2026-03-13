@@ -14,37 +14,40 @@
 
     <!-- ── Menu screen ────────────────────────────────────────────────── -->
     <div id="menu-screen" class="screen active">
-        <h2 class="menu-title">Choose Your Champion</h2>
+        <div class="game-layout">
 
-        <div class="mk-selection-container">
-
-            <div class="menu-player-config" id="menu-p1-config">
-                <div class="toggle-group">
+            <div class="player-panel" id="p1-selector-box">
+                <span class="player-role-label">Player 1</span>
+                <img src="" class="game-avatar" id="p1-menu-portrait" alt="Player 1">
+                <h3 class="champion-name" id="p1-menu-name">Select Champion</h3>
+                <p class="champion-flavor" id="p1-menu-flavor"></p>
+                <div class="toggle-group menu-toggle">
                     <button class="toggle-btn active" data-player="1" data-type="human">Human</button>
                     <button class="toggle-btn"        data-player="1" data-type="ai">AI</button>
                 </div>
-                <div class="portrait-container p1-portrait-container active-selector" id="p1-selector-box">
-                    <img src="" class="large-portrait" id="p1-menu-portrait" alt="Player 1">
-                </div>
-                <h3 class="champion-name" id="p1-menu-name">Player 1</h3>
             </div>
 
-            <div class="roster-grid" id="roster-grid"></div>
+            <div class="roster-container">
+                <h2 class="menu-title">Choose Your Champion</h2>
+                <div class="roster-grid" id="roster-grid"></div>
+            </div>
 
-            <div class="menu-player-config" id="menu-p2-config">
-                <div class="toggle-group">
-                    <button class="toggle-btn active" data-player="2" data-type="human">Human</button>
-                    <button class="toggle-btn"        data-player="2" data-type="ai">AI</button>
+            <div class="player-panel" id="p2-selector-box">
+                <span class="player-role-label">Player 2</span>
+                <img src="" class="game-avatar mirror-img" id="p2-menu-portrait" alt="Player 2">
+                <h3 class="champion-name" id="p2-menu-name">Select Champion</h3>
+                <p class="champion-flavor" id="p2-menu-flavor"></p>
+                <div class="toggle-group menu-toggle">
+                    <button class="toggle-btn" data-player="2" data-type="human">Human</button>
+                    <button class="toggle-btn active" data-player="2" data-type="ai">AI</button>
                 </div>
-                <div class="portrait-container p2-portrait-container" id="p2-selector-box">
-                    <img src="" class="large-portrait mirror-img" id="p2-menu-portrait" alt="Player 2">
-                </div>
-                <h3 class="champion-name" id="p2-menu-name">Player 2</h3>
+            </div>
+
+            <div class="controls">
+                <button class="action-btn" id="start-game-btn" disabled>Enter the Arena</button>
             </div>
 
         </div>
-
-        <button class="start-btn" id="start-game-btn">Enter the Arena</button>
     </div>
 
     <!-- ── Game screen ────────────────────────────────────────────────── -->

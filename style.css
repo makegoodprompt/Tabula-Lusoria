@@ -87,8 +87,7 @@ body:has(#menu-screen.active) #status        { display: none; }
         -1px -1px 1px rgba(255, 255, 255, 0.3);
 }
 
-#menu-screen,
-.player-panel {
+.player-panel, .roster-container {
     background-image:
         linear-gradient(
             150deg,
@@ -131,16 +130,21 @@ body:has(#menu-screen.active) #status        { display: none; }
 }
 
 #menu-screen {
-    padding: 40px;
-    width: 95%;
-    max-width: 1200px;
-    position: relative;
+    width: 100%;
+}
+
+.roster-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 20px 20px;
+    overflow-y: auto;
     box-shadow:
-        0  20px 60px rgba(0, 0, 0, 0.82),
-        0   8px 20px rgba(0, 0, 0, 0.52),
-        8px 12px  0px rgba(0, 0, 0, 0.22),
-        inset  4px  5px 12px rgba(255, 255, 255, 0.88),
-        inset -4px -5px 12px rgba(0,   0,   0,   0.15);
+        0  12px 35px rgba(0, 0, 0, 0.68),
+        0   5px 12px rgba(0, 0, 0, 0.42),
+        7px 10px  0px rgba(0, 0, 0, 0.20),
+        inset  3px  4px 10px rgba(255, 255, 255, 0.86),
+        inset -3px -4px 10px rgba(0,   0,   0,   0.16);
 }
 
 .menu-title {
@@ -164,55 +168,25 @@ body:has(#menu-screen.active) #status        { display: none; }
     border-radius: 2px;
 }
 
-.mk-selection-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 40px;
-    width: 100%;
+.menu-toggle {
+    margin-top: auto;
+    padding-bottom: 25px;
 }
 
-.menu-player-config {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-}
-
-.portrait-container {
-    padding: 12px;
-    border-radius: 4px;
-    transition: all 0.3s ease;
+#p1-selector-box, #p2-selector-box {
     cursor: pointer;
-    background-color: var(--marble-base);
-    background-image: var(--marble-grain);
-    box-shadow:
-        inset  4px  4px 10px rgba(0, 0, 0, 0.22),
-        inset -4px -4px 10px rgba(255, 255, 255, 0.80);
-    border-top:    1px solid rgba(0, 0, 0, 0.18);
-    border-left:   1px solid rgba(0, 0, 0, 0.14);
-    border-right:  1px solid rgba(255, 255, 255, 0.68);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.78);
 }
 
-.portrait-container.active-selector {
+.player-panel.active-selector {
     box-shadow:
-        inset  5px  5px 14px rgba(0, 0, 0, 0.35),
-        inset -5px -5px 14px rgba(255, 255, 255, 0.55),
-        0 0 0  4px var(--brass-gold),
-        0 0 25px rgba(194, 159, 76, 0.60);
-}
-
-.large-portrait {
-    width: 250px;
-    height: 250px;
-    object-fit: cover;
-    background-color: #1a1a1a;
-    display: block;
-    border: 4px solid var(--carved-red);
-    box-shadow:
-        inset 2px  2px 10px rgba(0, 0, 0, 0.8),
-              2px  2px  5px rgba(255, 255, 255, 0.5);
+        0  20px 55px rgba(0, 0, 0, 0.82),
+        0   8px 18px rgba(0, 0, 0, 0.52),
+        9px 13px  0px rgba(0, 0, 0, 0.22),
+        inset  4px  5px 12px rgba(255, 255, 255, 0.90),
+        inset -4px -5px 12px rgba(0,   0,   0,   0.18),
+        0 0 0  3px var(--brass-gold),
+        0 0 30px rgba(194, 159, 76, 0.40);
+    opacity: 1;
 }
 
 .champion-name {
@@ -220,21 +194,26 @@ body:has(#menu-screen.active) #status        { display: none; }
     font-size: 1.4rem;
 }
 
+.champion-flavor {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-style: italic;
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: var(--carved-red);
+    opacity: 0.75;
+    text-align: center;
+    padding: 10px 15px 0;
+    text-shadow: none;
+    font-weight: normal;
+    letter-spacing: 0.02em;
+    min-height: 3.5em;
+}
+
 .roster-grid {
     display: grid;
     grid-template-columns: repeat(3, 100px);
     gap: 15px;
-    padding: 20px;
-    border-radius: 8px;
-    background-color: var(--marble-shadow);
-    background-image: var(--marble-grain);
-    box-shadow:
-        inset  6px  6px 18px rgba(0, 0, 0, 0.35),
-        inset -6px -6px 18px rgba(255, 255, 255, 0.55);
-    border-top:    1px solid rgba(0, 0, 0, 0.20);
-    border-left:   1px solid rgba(0, 0, 0, 0.15);
-    border-right:  1px solid rgba(255, 255, 255, 0.60);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.70);
+    padding: 10px 0;
 }
 
 .roster-char-wrapper {
@@ -685,9 +664,13 @@ body:has(#menu-screen.active) #status        { display: none; }
                          padding-top: 0; padding-left: 20px; box-shadow: none; }
     .pieces-pool       { margin-top: 0; padding: 0 10px; }
     .board-container   { width: min(500px, 95vw); aspect-ratio: 1 / 1; }
+    .roster-container  { width: min(500px, 95vw); }
     .controls          { width: min(500px, 95vw); }
-    .mk-selection-container { flex-direction: column; align-items: center; }
-    .roster-grid       { order: -1; margin-bottom: 20px; }
+    .menu-toggle       { margin-top: 15px; padding-bottom: 0; }
+}
+
+@media (max-width: 1050px) {
+    .champion-flavor { display: none; }
 }
 
 @media (max-width: 560px) {

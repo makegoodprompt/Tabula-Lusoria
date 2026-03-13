@@ -32,15 +32,15 @@ const GameConfig = Object.freeze({
     PHASES: { PLACEMENT: 'placement', MOVEMENT: 'movement' },
     PLAYERS: { ONE: 1, TWO: 2 },
     ROSTER: [
-        { id: 'caesar', name: 'Julius Caesar', img: 'img/characters/caesar.jpg' },
-        { id: 'augustus', name: 'Octavian', img: 'img/characters/augustus.jpg' },
-        { id: 'cicero', name: 'Cicero', img: 'img/characters/cicero.jpg' },
-        { id: 'aurelius', name: 'Marcus Aurelius', img: 'img/characters/aurelius.jpg' },
-        { id: 'nero', name: 'Nero', img: 'img/characters/nero.jpg' },
-        { id: 'constantine', name: 'Constantine', img: 'img/characters/constantine.jpg' },
-        { id: 'pompey', name: 'Pompey', img: 'img/characters/pompey.jpg' },
-        { id: 'scipio', name: 'Scipio', img: 'img/characters/scipio.jpg' },
-        { id: 'brutus', name: 'Brutus', img: 'img/characters/brutus.jpg' }
+        { id: 'caesar',     name: 'Julius Caesar',   img: 'img/characters/caesar.jpg',       flavor: 'The perpetual dictator who crossed the Rubicon and met his end on the Ides of March.' },
+        { id: 'augustus',   name: 'Octavian',         img: 'img/characters/augustus.jpg',     flavor: 'Became Augustus, the first Emperor, and established centuries of internal peace known as the Pax Romana.' },
+        { id: 'cicero',     name: 'Cicero',           img: 'img/characters/cicero.jpg',       flavor: "The Republic's greatest orator, whose speeches still echo through history in defense of freedom." },
+        { id: 'aurelius',   name: 'Marcus Aurelius',  img: 'img/characters/aurelius.jpg',     flavor: "A key Stoic philosopher and Rome's 'Philosopher-King,' best known for his reflective work, 'Meditations'." },
+        { id: 'nero',       name: 'Nero',             img: 'img/characters/nero.jpg',         flavor: 'An infamous Emperor associated with the Great Fire, artistic self-indulgence, and the end of the Julio-Claudian dynasty.' },
+        { id: 'constantine',name: 'Constantine',      img: 'img/characters/constantine.jpg',  flavor: "Rome's first Christian emperor, who legalised the faith and established the new capital, Constantinople." },
+        { id: 'pompey',     name: 'Pompey',           img: 'img/characters/pompey.jpg',       flavor: "Julius Caesar's primary rival in the great civil war, famous for his earlier vast conquests in the East." },
+        { id: 'scipio',     name: 'Scipio',           img: 'img/characters/scipio.jpg',       flavor: "The brilliant general who earned the title 'Africanus' for defeating Hannibal at the decisive Battle of Zama." },
+        { id: 'brutus',     name: 'Brutus',           img: 'img/characters/brutus.jpg',       flavor: 'A leader in the assassination of Julius Caesar, driven by a conviction to save the Republic from dictatorship.' }
     ]
 });
 
@@ -227,7 +227,9 @@ class DOMView {
             p1MenuPortrait: document.getElementById('p1-menu-portrait'),
             p2MenuPortrait: document.getElementById('p2-menu-portrait'),
             p1MenuName: document.getElementById('p1-menu-name'),
+            p1MenuFlavor: document.getElementById('p1-menu-flavor'),
             p2MenuName: document.getElementById('p2-menu-name'),
+            p2MenuFlavor: document.getElementById('p2-menu-flavor'),
             startBtn: document.getElementById('start-game-btn'),
             boardEl: document.getElementById('board'),
             statusEl: document.getElementById('status'),
@@ -323,9 +325,11 @@ class DOMView {
 
         this.elements.p1MenuPortrait.src = p1Char ? p1Char.img : 'img/characters/unknown.jpg';
         this.elements.p1MenuName.innerText = p1Char ? p1Char.name : 'Select Player 1';
+        this.elements.p1MenuFlavor.innerText = p1Char ? p1Char.flavor : '';
 
         this.elements.p2MenuPortrait.src = p2Char ? p2Char.img : 'img/characters/unknown.jpg';
         this.elements.p2MenuName.innerText = p2Char ? p2Char.name : 'Select Player 2';
+        this.elements.p2MenuFlavor.innerText = p2Char ? p2Char.flavor : '';
 
         this.elements.startBtn.disabled = !(state.selections[GameConfig.PLAYERS.ONE] && state.selections[GameConfig.PLAYERS.TWO]);
     }
