@@ -2,17 +2,31 @@
 
 const GameConfig = Object.freeze({
     POSITIONS: { 
-        0:{x:50, y:50}, 1:{x:50, y:10.5}, 2:{x:77.9, y:22.1}, 3:{x:89.5, y:50}, 
-        4:{x:77.9, y:77.9}, 5:{x:50, y:89.5}, 6:{x:22.1, y:77.9}, 7:{x:10.5, y:50}, 8:{x:22.1, y:22.1} 
+        0: { x: 50, y: 50 }, 
+        1: { x: 50, y: 10.5 }, 
+        2: { x: 77.9, y: 22.1 }, 
+        3: { x: 89.5, y: 50 }, 
+        4: { x: 77.9, y: 77.9 }, 
+        5: { x: 50, y: 89.5 }, 
+        6: { x: 22.1, y: 77.9 }, 
+        7: { x: 10.5, y: 50 }, 
+        8: { x: 22.1, y: 22.1 } 
     },
     ADJACENCY: { 
-        0:[1,2,3,4,5,6,7,8], 1:[0,8,2], 2:[0,1,3], 3:[0,2,4], 
-        4:[0,3,5], 5:[0,4,6], 6:[0,5,7], 7:[0,6,8], 8:[0,7,1] 
+        0: [1, 2, 3, 4, 5, 6, 7, 8], 
+        1: [0, 8, 2], 
+        2: [0, 1, 3], 
+        3: [0, 2, 4], 
+        4: [0, 3, 5], 
+        5: [0, 4, 6], 
+        6: [0, 5, 7], 
+        7: [0, 6, 8], 
+        8: [0, 7, 1] 
     },
     WINNING_COMBINATIONS: [ 
-        [1,0,5], [2,0,6], [3,0,7], [4,0,8], 
-        [1,2,3], [2,3,4], [3,4,5], [4,5,6], 
-        [5,6,7], [6,7,8], [7,8,1], [8,1,2] 
+        [1, 0, 5], [2, 0, 6], [3, 0, 7], [4, 0, 8], 
+        [1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 6], 
+        [5, 6, 7], [6, 7, 8], [7, 8, 1], [8, 1, 2] 
     ],
     PLAYER_TYPES: { HUMAN: 'human', AI: 'ai' },
     PHASES: { PLACEMENT: 'placement', MOVEMENT: 'movement' },
@@ -36,30 +50,32 @@ class GameBoard {
     }
 
     getEmptyNodes() {
-        return this.state.map((p, i) => p === null ? i : null).filter(i => i !== null);
+        return this.state.map((player, index) => player === null ? index : null).filter(index => index !== null);
     }
 
-    getPlayerNodes(id) {
-        return this.state.map((p, i) => p === id ? i : null).filter(i => i !== null);
+    getPlayerNodes(playerId) {
+        return this.state.map((player, index) => player === playerId ? index : null).filter(index => index !== null);
     }
 
-    placePiece(i, id) {
-        if (this.state[i] !== null) throw new Error('Node is occupied.');
-        this.state[i] = id;
+    placePiece(nodeIndex, playerId) {
+        if (this.state[nodeIndex] !== null) throw new Error('Node is already occupied.');
+        this.state[nodeIndex] = playerId;
     }
 
-    movePiece(f, t, id) {
-        if (this.state[f] !== id || this.state[t] !== null) throw new Error('Invalid move.');
-        this.state[f] = null;
-        this.state[t] = id;
+    movePiece(fromIndex, toIndex, playerId) {
+        if (this.state[fromIndex] !== playerId || this.state[toIndex] !== null) {
+            throw new Error('Invalid move operation.');
+        }
+        this.state[fromIndex] = null;
+        this.state[toIndex] = playerId;
     }
 
-    isWinner(id) {
-        return GameConfig.WINNING_COMBINATIONS.some(c => c.every(i => this.state[i] === id));
+    isWinner(playerId) {
+        return GameConfig.WINNING_COMBINATIONS.some(combo => combo.every(index => this.state[index] === playerId));
     }
 
-    getWinningCombination(id) {
-        return GameConfig.WINNING_COMBINATIONS.find(c => c.every(i => this.state[i] === id)) || null;
+    getWinningCombination(playerId) {
+        return GameConfig.WINNING_COMBINATIONS.find(combo => combo.every(index => this.state[index] === playerId)) || null;
     }
 
     clone() {
@@ -72,46 +88,45 @@ class AIStrategy {
         const emptyNodes = board.getEmptyNodes();
 
         for (const node of emptyNodes) {
-            const t = board.clone();
-            t.placePiece(node, aiId);
-            if (t.isWinner(aiId)) return node;
+            const testBoard = board.clone();
+            testBoard.placePiece(node, aiId);
+            if (testBoard.isWinner(aiId)) return node;
         }
 
         for (const node of emptyNodes) {
-            const t = board.clone();
-            t.placePiece(node, opponentId);
-            if (t.isWinner(opponentId)) return node;
+            const testBoard = board.clone();
+            testBoard.placePiece(node, opponentId);
+            if (testBoard.isWinner(opponentId)) return node;
         }
 
-        if (emptyNodes.includes(0)) return 0;
+        let bestNodes = [];
+        let minOpponentThreats = Infinity;
 
-        for (const node of emptyNodes) {
-            const t = board.clone();
-            t.placePiece(node, opponentId);
-            let winThreats = 0;
-            const remaining = t.getEmptyNodes();
-            for (const nextNode of remaining) {
-                const t2 = t.clone();
-                t2.placePiece(nextNode, opponentId);
-                if (t2.isWinner(opponentId)) winThreats++;
+        for (const aiMove of emptyNodes) {
+            const testBoard = board.clone();
+            testBoard.placePiece(aiMove, aiId);
+            let maxThreatsForOpponent = 0;
+
+            const remainingEmpty = testBoard.getEmptyNodes();
+            for (const opponentMove of remainingEmpty) {
+                const counterBoard = testBoard.clone();
+                counterBoard.placePiece(opponentMove, opponentId);
+                const threats = this._countWinningThreats(counterBoard, opponentId);
+                if (threats > maxThreatsForOpponent) {
+                    maxThreatsForOpponent = threats;
+                }
             }
-            if (winThreats >= 2) return node;
-        }
 
-        for (const node of emptyNodes) {
-            const t = board.clone();
-            t.placePiece(node, aiId);
-            let winThreats = 0;
-            const remaining = t.getEmptyNodes();
-            for (const nextNode of remaining) {
-                const t2 = t.clone();
-                t2.placePiece(nextNode, aiId);
-                if (t2.isWinner(aiId)) winThreats++;
+            if (maxThreatsForOpponent < minOpponentThreats) {
+                minOpponentThreats = maxThreatsForOpponent;
+                bestNodes = [aiMove];
+            } else if (maxThreatsForOpponent === minOpponentThreats) {
+                bestNodes.push(aiMove);
             }
-            if (winThreats >= 2) return node;
         }
 
-        return emptyNodes[Math.floor(Math.random() * emptyNodes.length)];
+        if (bestNodes.includes(0)) return 0;
+        return bestNodes[Math.floor(Math.random() * bestNodes.length)];
     }
 
     static calculateBestMovement(board, aiId, opponentId) {
@@ -129,25 +144,25 @@ class AIStrategy {
         if (validMoves.length === 0) return null;
 
         for (const move of validMoves) {
-            const t = board.clone();
-            t.movePiece(move.from, move.to, aiId);
-            if (t.isWinner(aiId)) return move;
+            const testBoard = board.clone();
+            testBoard.movePiece(move.from, move.to, aiId);
+            if (testBoard.isWinner(aiId)) return move;
         }
 
         const safeMoves = [];
 
         for (const aiMove of validMoves) {
-            const t = board.clone();
-            t.movePiece(aiMove.from, aiMove.to, aiId);
+            const testBoard = board.clone();
+            testBoard.movePiece(aiMove.from, aiMove.to, aiId);
             let givesOpponentWin = false;
 
-            const opponentNodes = t.getPlayerNodes(opponentId);
+            const opponentNodes = testBoard.getPlayerNodes(opponentId);
             for (const oNode of opponentNodes) {
                 for (const adj of GameConfig.ADJACENCY[oNode]) {
-                    if (t.state[adj] === null) {
-                        const t2 = t.clone();
-                        t2.movePiece(oNode, adj, opponentId);
-                        if (t2.isWinner(opponentId)) {
+                    if (testBoard.state[adj] === null) {
+                        const counterBoard = testBoard.clone();
+                        counterBoard.movePiece(oNode, adj, opponentId);
+                        if (counterBoard.isWinner(opponentId)) {
                             givesOpponentWin = true;
                         }
                     }
@@ -159,22 +174,53 @@ class AIStrategy {
             if (!givesOpponentWin) safeMoves.push(aiMove);
         }
 
-        if (safeMoves.length === 0) {
-            return validMoves[Math.floor(Math.random() * validMoves.length)];
-        }
+        const candidates = safeMoves.length > 0 ? safeMoves : validMoves;
+        const centerMove = candidates.find(m => m.to === 0);
+        
+        if (centerMove) return centerMove;
+        return candidates[Math.floor(Math.random() * candidates.length)];
+    }
 
-        for (const move of safeMoves) {
-            if (move.to === 0) return move;
+    static _countWinningThreats(board, playerId) {
+        let threats = 0;
+        const emptyNodes = board.getEmptyNodes();
+        for (const node of emptyNodes) {
+            const testBoard = board.clone();
+            testBoard.placePiece(node, playerId);
+            if (testBoard.isWinner(playerId)) threats++;
         }
+        return threats;
+    }
+}
 
-        return safeMoves[Math.floor(Math.random() * safeMoves.length)];
+class EventEmitter {
+    constructor() {
+        this.events = {};
+    }
+    
+    on(event, listener) {
+        if (!this.events[event]) this.events[event] = [];
+        this.events[event].push(listener);
+    }
+    
+    emit(event, ...args) {
+        if (this.events[event]) {
+            this.events[event].forEach(listener => listener(...args));
+        }
     }
 }
 
 class DOMView {
-    constructor(ee) {
-        this.ee = ee;
-        this.elements = {
+    constructor(eventEmitter) {
+        this.eventEmitter = eventEmitter;
+        this.elements = this._cacheElements();
+        this.pieceElements = new Map();
+        this.nodeElements = [];
+        this._initializeNodes();
+    }
+
+    _cacheElements() {
+        return {
             menuScreen: document.getElementById('menu-screen'),
             gameScreen: document.getElementById('game-screen'),
             rosterGrid: document.getElementById('roster-grid'),
@@ -196,77 +242,98 @@ class DOMView {
             role1: document.getElementById('role-label-1'),
             role2: document.getElementById('role-label-2'),
             pool1: document.getElementById('pool1'),
-            pool2: document.getElementById('pool2')
+            pool2: document.getElementById('pool2'),
+            btnMenu: document.getElementById('btn-menu'),
+            btnRestart: document.getElementById('btn-restart'),
+            p1SelectorBox: document.getElementById('p1-selector-box'),
+            p2SelectorBox: document.getElementById('p2-selector-box')
         };
-        this.pieceElements = new Map();
-        this.nodeElements = [];
-        this._initNodes();
     }
 
-    _initNodes() {
+    _initializeNodes() {
         for (let i = 0; i < 9; i++) {
-            const n = document.createElement('div');
-            n.className = 'node';
-            n.style.left = GameConfig.POSITIONS[i].x + '%';
-            n.style.top = GameConfig.POSITIONS[i].y + '%';
-            n.onclick = () => this.ee.emit('nodeClicked', i);
-            this.elements.boardEl.appendChild(n);
-            this.nodeElements.push(n);
+            const nodeEl = document.createElement('div');
+            nodeEl.className = 'node';
+            nodeEl.style.left = GameConfig.POSITIONS[i].x + '%';
+            nodeEl.style.top = GameConfig.POSITIONS[i].y + '%';
+            nodeEl.addEventListener('click', () => this.eventEmitter.emit('nodeClicked', i));
+            this.elements.boardEl.appendChild(nodeEl);
+            this.nodeElements.push(nodeEl);
         }
     }
 
-    bindMenu(onStart, onRestart, onMenu) {
-        this.elements.startBtn.onclick = onStart;
-        document.getElementById('btn-restart').onclick = onRestart;
-        document.getElementById('btn-menu').onclick = onMenu;
-        document.querySelectorAll('.toggle-btn').forEach(b => {
-            b.onclick = (e) => this.ee.emit('playerTypeChanged', {
-                p: parseInt(e.target.dataset.player), 
-                t: e.target.dataset.type
+    bindMenuEvents() {
+        this.elements.startBtn.addEventListener('click', () => this.eventEmitter.emit('startGame'));
+        this.elements.btnRestart.addEventListener('click', () => this.eventEmitter.emit('restartRound'));
+        this.elements.btnMenu.addEventListener('click', () => this.eventEmitter.emit('returnToMenu'));
+        
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const player = parseInt(e.target.dataset.player);
+                const type = e.target.dataset.type;
+                this.eventEmitter.emit('playerTypeChanged', { player, type });
             });
         });
+
+        this.elements.p1SelectorBox.addEventListener('click', () => this.eventEmitter.emit('focusSelector', GameConfig.PLAYERS.ONE));
+        this.elements.p2SelectorBox.addEventListener('click', () => this.eventEmitter.emit('focusSelector', GameConfig.PLAYERS.TWO));
     }
 
-    renderRoster(roster, sel) {
+    renderRoster(roster, selections) {
         this.elements.rosterGrid.innerHTML = '';
-        roster.forEach(c => {
+        roster.forEach(char => {
             const img = document.createElement('img');
-            img.src = c.img;
-            img.className = `roster-char ${sel[1] === c.id ? 'p1-selected disabled' : ''} ${sel[2] === c.id ? 'p2-selected disabled' : ''}`;
-            img.onclick = () => this.ee.emit('charSelected', c.id);
+            img.src = char.img;
+            img.className = 'roster-char';
+            
+            if (selections[GameConfig.PLAYERS.ONE] === char.id) {
+                img.classList.add('p1-selected');
+            } else if (selections[GameConfig.PLAYERS.TWO] === char.id) {
+                img.classList.add('p2-selected');
+            }
+
+            if (Object.values(selections).includes(char.id)) {
+                img.classList.add('disabled');
+            }
+
+            img.addEventListener('click', () => this.eventEmitter.emit('characterSelected', char.id));
             this.elements.rosterGrid.appendChild(img);
         });
     }
 
-    updateMenu(state) {
-        document.querySelectorAll(`.toggle-btn[data-player="1"]`).forEach(b => b.classList.toggle('active', b.dataset.type === state.types[1]));
-        document.querySelectorAll(`.toggle-btn[data-player="2"]`).forEach(b => b.classList.toggle('active', b.dataset.type === state.types[2]));
+    updateMenuUI(state) {
+        document.querySelectorAll(`.toggle-btn[data-player="1"]`).forEach(b => b.classList.toggle('active', b.dataset.type === state.playerTypes[GameConfig.PLAYERS.ONE]));
+        document.querySelectorAll(`.toggle-btn[data-player="2"]`).forEach(b => b.classList.toggle('active', b.dataset.type === state.playerTypes[GameConfig.PLAYERS.TWO]));
 
-        document.getElementById('p1-selector-box').classList.toggle('active-selector', state.selecting === 1);
-        document.getElementById('p2-selector-box').classList.toggle('active-selector', state.selecting === 2);
+        this.elements.p1SelectorBox.classList.toggle('active-selector', state.selectingFor === GameConfig.PLAYERS.ONE);
+        this.elements.p2SelectorBox.classList.toggle('active-selector', state.selectingFor === GameConfig.PLAYERS.TWO);
 
-        const p1 = GameConfig.ROSTER.find(c => c.id === state.sel[1]);
-        const p2 = GameConfig.ROSTER.find(c => c.id === state.sel[2]);
+        const p1Char = GameConfig.ROSTER.find(c => c.id === state.selections[GameConfig.PLAYERS.ONE]);
+        const p2Char = GameConfig.ROSTER.find(c => c.id === state.selections[GameConfig.PLAYERS.TWO]);
 
-        this.elements.p1MenuPortrait.src = p1 ? p1.img : 'img/characters/unknown.jpg';
-        this.elements.p2MenuPortrait.src = p2 ? p2.img : 'img/characters/unknown.jpg';
-        this.elements.p1MenuName.innerText = p1 ? p1.name : 'Select P1';
-        this.elements.p2MenuName.innerText = p2 ? p2.name : 'Select P2';
+        this.elements.p1MenuPortrait.src = p1Char ? p1Char.img : 'img/characters/unknown.jpg';
+        this.elements.p1MenuName.innerText = p1Char ? p1Char.name : 'Select Player 1';
+
+        this.elements.p2MenuPortrait.src = p2Char ? p2Char.img : 'img/characters/unknown.jpg';
+        this.elements.p2MenuName.innerText = p2Char ? p2Char.name : 'Select Player 2';
+
+        this.elements.startBtn.disabled = !(state.selections[GameConfig.PLAYERS.ONE] && state.selections[GameConfig.PLAYERS.TWO]);
     }
 
-    showGame(state) {
+    showGameScreen(state) {
         this.elements.menuScreen.classList.remove('active');
         this.elements.gameScreen.classList.add('active');
 
-        const p1 = GameConfig.ROSTER.find(c => c.id === state.sel[1]);
-        const p2 = GameConfig.ROSTER.find(c => c.id === state.sel[2]);
+        const p1Char = GameConfig.ROSTER.find(c => c.id === state.selections[GameConfig.PLAYERS.ONE]);
+        const p2Char = GameConfig.ROSTER.find(c => c.id === state.selections[GameConfig.PLAYERS.TWO]);
 
-        this.elements.p1Avatar.src = p1.img;
-        this.elements.p2Avatar.src = p2.img;
-        this.elements.p1Name.innerText = p1.name;
-        this.elements.p2Name.innerText = p2.name;
-        this.elements.role1.innerText = state.types[1].toUpperCase();
-        this.elements.role2.innerText = state.types[2].toUpperCase();
+        this.elements.p1Avatar.src = p1Char.img;
+        this.elements.p1Name.innerText = p1Char.name;
+        this.elements.role1.innerText = state.playerTypes[GameConfig.PLAYERS.ONE].toUpperCase();
+
+        this.elements.p2Avatar.src = p2Char.img;
+        this.elements.p2Name.innerText = p2Char.name;
+        this.elements.role2.innerText = state.playerTypes[GameConfig.PLAYERS.TWO].toUpperCase();
     }
 
     showMenuScreen() {
@@ -275,93 +342,109 @@ class DOMView {
     }
 
     updateScores(scores) {
-        this.elements.p1Score.innerText = scores[1];
-        this.elements.p2Score.innerText = scores[2];
+        this.elements.p1Score.innerText = scores[GameConfig.PLAYERS.ONE];
+        this.elements.p2Score.innerText = scores[GameConfig.PLAYERS.TWO];
     }
 
-    setStatus(text) { 
-        this.elements.statusEl.innerText = text; 
+    setStatus(text) {
+        this.elements.statusEl.innerText = text;
     }
-    
-    setActivePlayerPanel(cur, active) {
-        this.elements.panel1.classList.toggle('active', active && cur === 1);
-        this.elements.panel2.classList.toggle('active', active && cur === 2);
+
+    setActivePlayerPanel(playerId, gameActive) {
+        this.elements.panel1.classList.toggle('active', gameActive && playerId === GameConfig.PLAYERS.ONE);
+        this.elements.panel2.classList.toggle('active', gameActive && playerId === GameConfig.PLAYERS.TWO);
     }
 
     togglePools(phase) {
-        this.elements.pool1.classList.toggle('hidden', phase !== 'placement');
-        this.elements.pool2.classList.toggle('hidden', phase !== 'placement');
+        const isPlacement = phase === GameConfig.PHASES.PLACEMENT;
+        this.elements.pool1.classList.toggle('hidden', !isPlacement);
+        this.elements.pool2.classList.toggle('hidden', !isPlacement);
     }
 
-    clearHighlights() {
-        this.pieceElements.forEach(p => { 
-            p.el.classList.remove('can-move', 'selected'); 
-            p.el.onclick = null; 
+    clearBoardHighlights() {
+        this.pieceElements.forEach(pieceData => {
+            pieceData.el.classList.remove('can-move', 'selected');
+            pieceData.el.onclick = null;
         });
-        this.nodeElements.forEach(n => n.classList.remove('can-move-to', 'can-place'));
-    }
-
-    highlightPlacement(boardState, isHuman) {
-        if (!isHuman) return;
-        boardState.forEach((p, i) => { 
-            if (p === null) this.nodeElements[i].classList.add('can-place'); 
+        this.nodeElements.forEach(node => {
+            node.classList.remove('can-move-to', 'can-place');
         });
     }
 
-    highlightMovable(boardState, cur, isHuman) {
-        this.pieceElements.forEach((p, i) => {
-            if (p.id === cur && GameConfig.ADJACENCY[i].some(a => boardState[a] === null) && isHuman) {
-                p.el.classList.add('can-move');
-                p.el.onclick = () => this.ee.emit('nodeClicked', i);
+    highlightPlacementNodes(boardState, isHumanTurn) {
+        if (!isHumanTurn) return;
+        boardState.forEach((player, idx) => {
+            if (player === null) {
+                this.nodeElements[idx].classList.add('can-place');
             }
         });
     }
 
-    highlightTarget(nodeId, boardState) {
-        GameConfig.ADJACENCY[nodeId].forEach(a => { 
-            if (boardState[a] === null) this.nodeElements[a].classList.add('can-move-to'); 
+    highlightMovablePieces(boardState, currentPlayer, isHumanTurn) {
+        if (!isHumanTurn) return;
+        this.pieceElements.forEach((pieceData, nodeId) => {
+            if (pieceData.player === currentPlayer) {
+                const canMove = GameConfig.ADJACENCY[nodeId].some(adj => boardState[adj] === null);
+                if (canMove) {
+                    pieceData.el.classList.add('can-move');
+                    pieceData.el.onclick = () => this.eventEmitter.emit('nodeClicked', nodeId);
+                }
+            }
         });
     }
 
-    highlightSelected(id) { 
-        if (this.pieceElements.has(id)) {
-            this.pieceElements.get(id).el.classList.add('selected'); 
+    highlightTargetNodes(selectedNodeId, boardState) {
+        GameConfig.ADJACENCY[selectedNodeId].forEach(adj => {
+            if (boardState[adj] === null) {
+                this.nodeElements[adj].classList.add('can-move-to');
+            }
+        });
+    }
+
+    highlightSelectedPiece(nodeId) {
+        const piece = this.pieceElements.get(nodeId);
+        if (piece) {
+            piece.el.classList.add('selected');
         }
     }
 
-    renderPiece(i, id) {
-        const p = document.createElement('div');
-        p.className = `piece player${id}`;
-        p.style.left = GameConfig.POSITIONS[i].x + '%';
-        p.style.top = GameConfig.POSITIONS[i].y + '%';
-        this.elements.boardEl.appendChild(p);
-        this.pieceElements.set(i, {id, el: p});
+    renderNewPiece(nodeId, playerId) {
+        const pieceEl = document.createElement('div');
+        pieceEl.className = `piece player${playerId}`;
+        pieceEl.style.left = GameConfig.POSITIONS[nodeId].x + '%';
+        pieceEl.style.top = GameConfig.POSITIONS[nodeId].y + '%';
+        this.elements.boardEl.appendChild(pieceEl);
+        
+        this.pieceElements.set(nodeId, { player: playerId, el: pieceEl });
 
-        const pool = id === 1 ? this.elements.pool1 : this.elements.pool2;
-        const poolPiece = pool.querySelector('.pool-piece:not(.placed)');
+        const poolEl = playerId === GameConfig.PLAYERS.ONE ? this.elements.pool1 : this.elements.pool2;
+        const poolPiece = poolEl.querySelector('.pool-piece:not(.placed)');
         if (poolPiece) poolPiece.classList.add('placed');
     }
 
-    movePiece(f, t) {
-        const p = this.pieceElements.get(f);
-        p.el.style.left = GameConfig.POSITIONS[t].x + '%';
-        p.el.style.top = GameConfig.POSITIONS[t].y + '%';
-        this.pieceElements.set(t, p);
-        this.pieceElements.delete(f);
+    renderPieceMovement(fromId, toId) {
+        const pieceData = this.pieceElements.get(fromId);
+        if (pieceData) {
+            pieceData.el.style.left = GameConfig.POSITIONS[toId].x + '%';
+            pieceData.el.style.top = GameConfig.POSITIONS[toId].y + '%';
+            this.pieceElements.set(toId, pieceData);
+            this.pieceElements.delete(fromId);
+        }
     }
 
-    highlightWin(combo, id) {
-        combo.forEach(n => { 
-            if (this.pieceElements.has(n) && this.pieceElements.get(n).id === id) {
-                this.pieceElements.get(n).el.classList.add('winner'); 
+    highlightWinningCombination(combo, winnerId) {
+        combo.forEach(nodeId => {
+            const pieceData = this.pieceElements.get(nodeId);
+            if (pieceData && pieceData.player === winnerId) {
+                pieceData.el.classList.add('winner');
             }
         });
     }
 
-    clear() { 
-        this.pieceElements.forEach(p => p.el.remove()); 
-        this.pieceElements.clear(); 
-        document.querySelectorAll('.pool-piece').forEach(p => p.classList.remove('placed')); 
+    clearPieces() {
+        this.pieceElements.forEach(pieceData => pieceData.el.remove());
+        this.pieceElements.clear();
+        document.querySelectorAll('.pool-piece').forEach(p => p.classList.remove('placed'));
     }
 
     animateRestartButton() {
@@ -375,195 +458,263 @@ class DOMView {
     }
 }
 
-class EventEmitter {
-    constructor() { this.evs = {}; }
-    on(e, l) { if (!this.evs[e]) this.evs[e] = []; this.evs[e].push(l); }
-    emit(e, ...a) { if (this.evs[e]) this.evs[e].forEach(l => l(...a)); }
-}
-
 class GameController {
-    constructor(v, ee) {
-        this.v = v; 
-        this.ee = ee;
+    constructor(view, eventEmitter) {
+        this.view = view;
+        this.eventEmitter = eventEmitter;
         
         const shuffled = [...GameConfig.ROSTER].sort(() => 0.5 - Math.random());
         
-        this.state = {
-            types: {1: 'human', 2: 'ai'},
-            sel: {1: shuffled[0].id, 2: shuffled[1].id},
-            selecting: 1
+        this.menuState = {
+            playerTypes: { [GameConfig.PLAYERS.ONE]: GameConfig.PLAYER_TYPES.HUMAN, [GameConfig.PLAYERS.TWO]: GameConfig.PLAYER_TYPES.AI },
+            selections: { [GameConfig.PLAYERS.ONE]: shuffled[0].id, [GameConfig.PLAYERS.TWO]: shuffled[1].id },
+            selectingFor: GameConfig.PLAYERS.ONE
         };
-        
+
         this.board = new GameBoard();
-        this.scores = {1:0, 2:0};
-        this.active = false;
-        this.cur = 1;
-        this.phase = 'placement';
-        this.selected = null;
-        this._setup();
+        this.scores = { [GameConfig.PLAYERS.ONE]: 0, [GameConfig.PLAYERS.TWO]: 0 };
+        this.phase = GameConfig.PHASES.PLACEMENT;
+        this.currentPlayer = GameConfig.PLAYERS.ONE;
+        this.selectedPieceNode = null;
+        this.gameActive = false;
+
+        this._setupEvents();
     }
 
-    _setup() {
-        this.ee.on('charSelected', (id) => {
-            if (this.state.sel[1] === id || this.state.sel[2] === id) return;
-            this.state.sel[this.state.selecting] = id;
-            this.v.renderRoster(GameConfig.ROSTER, this.state.sel);
-            this.v.updateMenu(this.state);
+    init() {
+        this.view.bindMenuEvents();
+        this.view.renderRoster(GameConfig.ROSTER, this.menuState.selections);
+        this.view.updateMenuUI(this.menuState);
+    }
+
+    _setupEvents() {
+        this.eventEmitter.on('playerTypeChanged', (data) => {
+            this.menuState.playerTypes[data.player] = data.type;
+            this.view.updateMenuUI(this.menuState);
         });
 
-        this.ee.on('focusSelector', (id) => {
-            this.state.selecting = id;
-            this.v.updateMenu(this.state);
+        this.eventEmitter.on('focusSelector', (playerId) => {
+            this.menuState.selectingFor = playerId;
+            this.view.updateMenuUI(this.menuState);
         });
 
-        this.ee.on('playerTypeChanged', (d) => { 
-            this.state.types[d.p] = d.t; 
-            this.v.updateMenu(this.state); 
-        });
-
-        this.ee.on('nodeClicked', (i) => this._handleMove(i, false));
-        this.v.bindMenu(() => this._start(), () => this._reset(), () => this._toMenu());
-    }
-
-    init() { 
-        this.v.renderRoster(GameConfig.ROSTER, this.state.sel);
-        this.v.updateMenu(this.state); 
-    }
-
-    _start() { 
-        this.scores = {1:0, 2:0}; 
-        this.v.showGame(this.state); 
-        this.v.updateScores(this.scores);
-        this._reset(); 
-    }
-
-    _toMenu() { 
-        this.active = false; 
-        this.v.showMenuScreen(); 
-    }
-
-    _reset() { 
-        this.board = new GameBoard(); 
-        this.cur = 1; 
-        this.active = true; 
-        this.phase = 'placement';
-        this.selected = null;
-        this.v.clear(); 
-        this.v.resetRestartButton();
-        this._update(); 
-        this._checkAi();
-    }
-
-    _handleMove(i, isAi) {
-        if (!this.active || (this.state.types[this.cur] === 'ai' && !isAi)) return;
-
-        if (this.phase === 'placement') {
-            if (this.board.state[i] !== null) return;
-            this.board.placePiece(i, this.cur);
-            this.v.renderPiece(i, this.cur);
+        this.eventEmitter.on('characterSelected', (charId) => {
+            if (Object.values(this.menuState.selections).includes(charId)) return;
             
-            if (this.board.isWinner(this.cur)) { 
-                this._win(); 
-                return; 
+            this.menuState.selections[this.menuState.selectingFor] = charId;
+            
+            if (this.menuState.selectingFor === GameConfig.PLAYERS.ONE && !this.menuState.selections[GameConfig.PLAYERS.TWO]) {
+                this.menuState.selectingFor = GameConfig.PLAYERS.TWO;
+            } else if (this.menuState.selectingFor === GameConfig.PLAYERS.TWO && !this.menuState.selections[GameConfig.PLAYERS.ONE]) {
+                this.menuState.selectingFor = GameConfig.PLAYERS.ONE;
             }
             
-            if (this.board.getPlayerNodes(1).length === 3 && this.board.getPlayerNodes(2).length === 3) {
-                this.phase = 'movement';
-            }
-            this._step();
+            this.view.renderRoster(GameConfig.ROSTER, this.menuState.selections);
+            this.view.updateMenuUI(this.menuState);
+        });
 
+        this.eventEmitter.on('startGame', () => this._startNewSession());
+        
+        this.eventEmitter.on('returnToMenu', () => {
+            this.gameActive = false;
+            this.view.showMenuScreen();
+            this.view.renderRoster(GameConfig.ROSTER, this.menuState.selections);
+            this.view.updateMenuUI(this.menuState);
+        });
+        
+        this.eventEmitter.on('restartRound', () => this._restartRound());
+        this.eventEmitter.on('nodeClicked', (nodeIndex) => this._handleInteraction(nodeIndex, false));
+    }
+
+    _startNewSession() {
+        this.scores = { [GameConfig.PLAYERS.ONE]: 0, [GameConfig.PLAYERS.TWO]: 0 };
+        this.view.showGameScreen(this.menuState);
+        this.view.updateScores(this.scores);
+        this._restartRound();
+    }
+
+    _restartRound() {
+        this.board = new GameBoard();
+        this.phase = GameConfig.PHASES.PLACEMENT;
+        this.currentPlayer = GameConfig.PLAYERS.ONE;
+        this.selectedPieceNode = null;
+        this.gameActive = true;
+
+        this.view.clearPieces();
+        this.view.resetRestartButton();
+        this._updateGameStateUI();
+        this._triggerAITurnIfNeeded();
+    }
+
+    _handleInteraction(nodeIndex, isAiOrigin) {
+        if (!this.gameActive) return;
+        if (this.menuState.playerTypes[this.currentPlayer] === GameConfig.PLAYER_TYPES.AI && !isAiOrigin) return;
+
+        if (this.phase === GameConfig.PHASES.PLACEMENT) {
+            this._processPlacement(nodeIndex);
+        } else if (this.phase === GameConfig.PHASES.MOVEMENT) {
+            this._processMovement(nodeIndex);
+        }
+    }
+
+    _processPlacement(nodeIndex) {
+        if (this.board.state[nodeIndex] !== null) return;
+
+        this.board.placePiece(nodeIndex, this.currentPlayer);
+        this.view.renderNewPiece(nodeIndex, this.currentPlayer);
+
+        if (this.board.isWinner(this.currentPlayer)) {
+            this._resolveVictory(this.currentPlayer);
+            return;
+        }
+
+        const p1Count = this.board.getPlayerNodes(GameConfig.PLAYERS.ONE).length;
+        const p2Count = this.board.getPlayerNodes(GameConfig.PLAYERS.TWO).length;
+
+        if (p1Count === 3 && p2Count === 3) {
+            this.phase = GameConfig.PHASES.MOVEMENT;
+            this.currentPlayer = GameConfig.PLAYERS.TWO;
+            this._updateGameStateUI();
+            this._triggerAITurnIfNeeded();
         } else {
-            if (this.board.state[i] === this.cur) {
-                this.selected = i;
-                this._update();
-                this.v.highlightSelected(i);
-            } else if (this.board.state[i] === null && this.selected !== null && GameConfig.ADJACENCY[this.selected].includes(i)) {
-                this.board.movePiece(this.selected, i, this.cur);
-                this.v.movePiece(this.selected, i);
+            this._passTurn();
+        }
+    }
+
+    _processMovement(nodeIndex) {
+        if (this.board.state[nodeIndex] === this.currentPlayer) {
+            this.selectedPieceNode = nodeIndex;
+            this._updateGameStateUI();
+            this.view.highlightSelectedPiece(nodeIndex);
+            return;
+        }
+
+        if (this.board.state[nodeIndex] === null && this.selectedPieceNode !== null) {
+            const isAdjacent = GameConfig.ADJACENCY[this.selectedPieceNode].includes(nodeIndex);
+            if (isAdjacent) {
+                this.board.movePiece(this.selectedPieceNode, nodeIndex, this.currentPlayer);
+                this.view.renderPieceMovement(this.selectedPieceNode, nodeIndex);
                 
-                if (this.board.isWinner(this.cur)) { 
-                    this._win(); 
-                    return; 
+                if (this.board.isWinner(this.currentPlayer)) {
+                    this._resolveVictory(this.currentPlayer);
+                    return;
                 }
-                
-                this.selected = null;
-                this._step();
-            } else if (this.selected !== null && this.state.types[this.cur] === 'human') {
-                this.selected = null;
-                this._update();
+
+                this.selectedPieceNode = null;
+                this._passTurn();
+                return;
+            }
+        }
+
+        if (this.selectedPieceNode !== null && this.menuState.playerTypes[this.currentPlayer] === GameConfig.PLAYER_TYPES.HUMAN) {
+            this.selectedPieceNode = null;
+            this._updateGameStateUI();
+        }
+    }
+
+    _passTurn() {
+        this.currentPlayer = this.currentPlayer === GameConfig.PLAYERS.ONE ? GameConfig.PLAYERS.TWO : GameConfig.PLAYERS.ONE;
+        this._updateGameStateUI();
+        this._triggerAITurnIfNeeded();
+    }
+
+    _triggerAITurnIfNeeded() {
+        if (this.gameActive && this.menuState.playerTypes[this.currentPlayer] === GameConfig.PLAYER_TYPES.AI) {
+            setTimeout(() => this._executeAIMove(), 800);
+        }
+    }
+
+    _executeAIMove() {
+        if (!this.gameActive || this.menuState.playerTypes[this.currentPlayer] !== GameConfig.PLAYER_TYPES.AI) return;
+
+        const opponentId = this.currentPlayer === GameConfig.PLAYERS.ONE ? GameConfig.PLAYERS.TWO : GameConfig.PLAYERS.ONE;
+
+        if (this.phase === GameConfig.PHASES.PLACEMENT) {
+            const bestNode = AIStrategy.calculateBestPlacement(this.board, this.currentPlayer, opponentId);
+            this._handleInteraction(bestNode, true);
+        } else if (this.phase === GameConfig.PHASES.MOVEMENT) {
+            const bestMove = AIStrategy.calculateBestMovement(this.board, this.currentPlayer, opponentId);
+            if (bestMove) {
+                this._handleInteraction(bestMove.from, true);
+                setTimeout(() => {
+                    if (this.gameActive) this._handleInteraction(bestMove.to, true);
+                }, 600);
             }
         }
     }
 
-    _step() {
-        this.cur = this.cur === 1 ? 2 : 1;
-        this._update();
-        this._checkAi();
+    _resolveVictory(winnerId) {
+        this.gameActive = false;
+        this.scores[winnerId]++;
+        this.view.updateScores(this.scores);
+        this.view.clearBoardHighlights();
+        this.view.setActivePlayerPanel(null, false);
+
+        const winningCombo = this.board.getWinningCombination(winnerId);
+        if (winningCombo) {
+            this.view.highlightWinningCombination(winningCombo, winnerId);
+        }
+
+        const charId = this.menuState.selections[winnerId];
+        const charData = GameConfig.ROSTER.find(c => c.id === charId);
+        
+        this.view.setStatus(`VICTORY: ${charData.name.toUpperCase()}!`);
+        this.view.animateRestartButton();
     }
 
-    _checkAi() {
-        if (this.active && this.state.types[this.cur] === 'ai') {
-            setTimeout(() => {
-                if (!this.active) return;
-                const oId = this.cur === 1 ? 2 : 1;
-                if (this.phase === 'placement') {
-                    this._handleMove(AIStrategy.calculateBestPlacement(this.board, this.cur, oId), true);
+    _updateGameStateUI() {
+        this.view.setActivePlayerPanel(this.currentPlayer, this.gameActive);
+        this.view.togglePools(this.phase);
+        this.view.clearBoardHighlights();
+
+        if (this.gameActive) {
+            this._updateStatusText();
+
+            const isHumanTurn = this.menuState.playerTypes[this.currentPlayer] === GameConfig.PLAYER_TYPES.HUMAN;
+
+            if (this.phase === GameConfig.PHASES.PLACEMENT) {
+                this.view.highlightPlacementNodes(this.board.state, isHumanTurn);
+            } else if (this.phase === GameConfig.PHASES.MOVEMENT) {
+                if (this.selectedPieceNode === null) {
+                    this.view.highlightMovablePieces(this.board.state, this.currentPlayer, isHumanTurn);
                 } else {
-                    const m = AIStrategy.calculateBestMovement(this.board, this.cur, oId);
-                    if (m) {
-                        this._handleMove(m.f, true);
-                        setTimeout(() => { 
-                            if (this.active) this._handleMove(m.t, true); 
-                        }, 600);
-                    }
+                    this.view.highlightTargetNodes(this.selectedPieceNode, this.board.state);
                 }
-            }, 800);
+            }
         }
     }
 
-    _win() {
-        this.active = false; 
-        this.scores[this.cur]++; 
-        this.v.updateScores(this.scores);
-        this.v.clearHighlights();
-        this.v.setActivePlayerPanel(null, false);
-        this.v.highlightWin(this.board.getWinningCombination(this.cur), this.cur);
-        this.v.setStatus(`VICTORY: ${GameConfig.ROSTER.find(c => c.id === this.state.sel[this.cur]).name.toUpperCase()}!`);
-        this.v.animateRestartButton();
-    }
-
-    _update() {
-        this.v.setActivePlayerPanel(this.cur, this.active);
-        this.v.togglePools(this.phase);
-        this.v.clearHighlights();
-        if (!this.active) return;
-
-        const char = GameConfig.ROSTER.find(c => c.id === this.state.sel[this.cur]).name;
-        const isAi = this.state.types[this.cur] === 'ai';
-        const isHum = !isAi;
-
-        let txt = this.phase === 'placement' ? `Placement: ${char}'s Turn` : `Movement: ${char}'s Turn`;
-        if (isAi) {
-            txt = this.phase === 'placement' ? `${char} is thinking...` : (this.selected !== null ? `${char} is moving...` : `${char} is analyzing...`);
-        } else if (this.phase === 'movement' && this.selected !== null) {
-            txt = "Select destination";
+    _updateStatusText() {
+        const charId = this.menuState.selections[this.currentPlayer];
+        const charData = GameConfig.ROSTER.find(c => c.id === charId);
+        const charName = charData ? charData.name : "Player";
+        const isAI = this.menuState.playerTypes[this.currentPlayer] === GameConfig.PLAYER_TYPES.AI;
+        
+        if (this.phase === GameConfig.PHASES.MOVEMENT && this.selectedPieceNode !== null && !isAI) {
+            this.view.setStatus("Select destination");
+            return;
         }
         
-        this.v.setStatus(txt);
-
-        if (this.phase === 'placement') {
-            this.v.highlightPlacement(this.board.state, isHum);
-        } else if (this.selected === null) {
-            this.v.highlightMovable(this.board.state, this.cur, isHum);
-        } else {
-            this.v.highlightTarget(this.selected, this.board.state);
+        if (isAI) {
+            const actionText = this.phase === GameConfig.PHASES.PLACEMENT 
+                ? `${charName} is thinking...` 
+                : (this.selectedPieceNode !== null ? `${charName} is moving...` : `${charName} is analyzing...`);
+            this.view.setStatus(actionText);
+            return;
         }
+        
+        const prefix = this.phase === GameConfig.PHASES.PLACEMENT ? "Placement: " : "Movement: ";
+        this.view.setStatus(`${prefix}${charName}'s Turn`);
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const ee = new EventEmitter();
-    const v = new DOMView(ee);
-    const g = new GameController(v, ee);
-    g.init();
-});
+class App {
+    static start() {
+        const eventEmitter = new EventEmitter();
+        const view = new DOMView(eventEmitter);
+        const game = new GameController(view, eventEmitter);
+        game.init();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => App.start());
