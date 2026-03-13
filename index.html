@@ -303,7 +303,7 @@
             pieceElements.forEach(p => {
                 if (p.player === currentPlayer) {
                     let canMove = ADJACENCY[p.node].some(nodeIdx => board[nodeIdx] === null);
-                    if (canMove && (currentPlayer === 1 || gameMode === 'pvp')) { // Nie podświetlaj pionków AI by je klikać
+                    if (canMove && (currentPlayer === 1 || gameMode === 'pvp')) { 
                         p.el.classList.add('can-move');
                         p.el.onclick = () => handleNodeClick(p.node, false);
                     } else { p.el.onclick = null; }
@@ -322,7 +322,6 @@
 
         function handleNodeClick(i, isAiMove) {
             if (!gameActive) return;
-            // Blokada kliknięć gracza podczas tury AI
             if (gameMode === 'ai' && currentPlayer === 2 && !isAiMove) return;
 
             if (phase === 'placement') {
@@ -447,7 +446,21 @@
             updateUI();
         }
 
-        // --- SZTUCZNA INTELIGENCJA ---
+        // --- ULEPSZONA SZTUCZNA INTELIGENCJA ---
+
+        // Zlicza, w ilu miejscach dany gracz wygrywa, kładąc swój pionek
+        function countWinningThreats(player) {
+            let threats = 0;
+            for (let i = 0; i < 9; i++) {
+                if (board[i] === null) {
+                    board[i] = player;
+                    if (checkWin(player)) threats++;
+                    board[i] = null;
+                }
+            }
+            return threats;
+        }
+
         function makeAiMove() {
             if (!gameActive || currentPlayer !== 2) return;
 
@@ -457,7 +470,6 @@
             } else if (phase === 'movement') {
                 let bestMove = getBestMovementMove();
                 if (bestMove) {
-                    // Animacja: najpierw zaznacz pionek, po chwili przesuń
                     handleNodeClick(bestMove.from, true); 
                     setTimeout(() => {
                         if(gameActive) handleNodeClick(bestMove.to, true);
@@ -470,7 +482,7 @@
             let emptyNodes = [];
             for (let i = 0; i < 9; i++) if (board[i] === null) emptyNodes.push(i);
 
-            // 1. Sprawdź, czy AI może wygrać teraz
+            // 1. Jeśli AI może wygrać od razu - gra i kończy zabawę
             for (let node of emptyNodes) {
                 board[node] = 2;
                 let wins = checkWin(2);
@@ -478,7 +490,7 @@
                 if (wins) return node;
             }
 
-            // 2. Sprawdź, czy Gracz (1) wygrałby - ZABLOKUJ GO
+            // 2. Jeśli Ty byś wygrał w następnym ruchu - AI Cię bezwzględnie blokuje
             for (let node of emptyNodes) {
                 board[node] = 1;
                 let wins = checkWin(1);
@@ -486,18 +498,49 @@
                 if (wins) return node;
             }
 
-            // 3. Zajmij środek (0), jeśli wolny
-            if (emptyNodes.includes(0)) return 0;
+            // 3. OBRONA PRZED WIDEŁKAMI (Minimax-Lite)
+            let bestNodes = [];
+            let minPlayerThreats = Infinity;
 
-            // 4. Losowe puste pole
-            return emptyNodes[Math.floor(Math.random() * emptyNodes.length)];
+            for (let aiMove of emptyNodes) {
+                board[aiMove] = 2; // AI testuje ruch
+                
+                let maxThreatsForPlayer = 0;
+                
+                // AI sprawdza wszystkie Twoje możliwe odpowiedzi
+                for (let playerMove = 0; playerMove < 9; playerMove++) {
+                    if (board[playerMove] === null) {
+                        board[playerMove] = 1; 
+                        let threats = countWinningThreats(1); // Ile otwierasz sobie dróg do zwycięstwa?
+                        if (threats > maxThreatsForPlayer) {
+                            maxThreatsForPlayer = threats;
+                        }
+                        board[playerMove] = null;
+                    }
+                }
+                
+                board[aiMove] = null; // AI cofa testowany ruch
+
+                // AI chce zminimalizować Twoje szanse na stworzenie widełek
+                if (maxThreatsForPlayer < minPlayerThreats) {
+                    minPlayerThreats = maxThreatsForPlayer;
+                    bestNodes = [aiMove];
+                } else if (maxThreatsForPlayer === minPlayerThreats) {
+                    bestNodes.push(aiMove);
+                }
+            }
+
+            // 4. Jeśli w optymalnych ruchach jest strategiczny środek, zajmij go
+            if (bestNodes.includes(0)) return 0;
+
+            // Zwróć jedno z najbezpieczniejszych pól
+            return bestNodes[Math.floor(Math.random() * bestNodes.length)];
         }
 
         function getBestMovementMove() {
             let validAiMoves = [];
             let aiPieces = pieceElements.filter(p => p.player === 2);
             
-            // Znajdź wszystkie legalne ruchy AI
             aiPieces.forEach(p => {
                 ADJACENCY[p.node].forEach(adjNode => {
                     if (board[adjNode] === null) validAiMoves.push({ from: p.node, to: adjNode });
@@ -506,16 +549,13 @@
 
             if (validAiMoves.length === 0) return null;
 
-            // 1. Sprawdź czy ruch daje natychmiastowe zwycięstwo
             for (let move of validAiMoves) {
                 board[move.from] = null; board[move.to] = 2;
                 let wins = checkWin(2);
-                board[move.from] = 2; board[move.to] = null; // cofnij
+                board[move.from] = 2; board[move.to] = null;
                 if (wins) return move;
             }
 
-            // 2. Symuluj potencjalne wygrane gracza i ZABLOKUJ je
-            // Znajdź pola na które gracz mógłby się ruszyć by wygrać
             let playerPieces = pieceElements.filter(p => p.player === 1);
             let dangerousTargets = [];
             
@@ -529,19 +569,16 @@
                 });
             });
 
-            // Jeśli gracz może wygrać wchodząc na jakieś pole, AI spróbuje tam wejść pierwsze
             if (dangerousTargets.length > 0) {
                 for (let move of validAiMoves) {
                     if (dangerousTargets.includes(move.to)) return move;
                 }
             }
 
-            // 3. Priorytet dla ruchu na środek
             for (let move of validAiMoves) {
                 if (move.to === 0) return move;
             }
 
-            // 4. Fallback - wybierz losowy dostępny ruch
             return validAiMoves[Math.floor(Math.random() * validAiMoves.length)];
         }
 
